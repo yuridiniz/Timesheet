@@ -11,7 +11,7 @@
             <Button Name="btnEntrada" Content="Entrada" Height="30" Width="100" Margin="10" VerticalAlignment="Center"/>
             <Button Name="btnSair" IsEnabled="False" Content="Saída" Height="30" Width="100" Margin="10" VerticalAlignment="Center"/>
         </StackPanel>
-        <CheckBox Name="ckbConferir" Content="Conferir" HorizontalAlignment="Left" Margin="10,149,0,0" VerticalAlignment="Top"/>
+        <CheckBox ToolTip="Marque essa checkbox para depois saber que o registro deve ser conferido ou corrigido" Name="ckbConferir" Content="Demorei para registrar" HorizontalAlignment="Left" Margin="10,149,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>
