@@ -115,7 +115,7 @@ namespace Timesheet
 
                     wr.Close();
 
-                    MessageBox.Show("Arquivo de configuração criado em 'Meus Documento/Timesheet'
+                    MessageBox.Show("Arquivo de configuração criado em 'Meus Documento/Timesheet'");
                 }
             }
 
