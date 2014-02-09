@@ -54,11 +54,7 @@ namespace Timesheet
                 MainContext.btnEntrada.IsEnabled = true;
                 MainContext.btnSair.IsEnabled = false;
 
-                MainContext.lblHrsPretendidas.Content = Pagamento.HrsEsperadas.ToString();
-                MainContext.lblValor.Content = "R$ " + Pagamento.Salario();
-                MainContext.lblHrs.Content = Pagamento.Horas.ToString();
-                MainContext.lblValorEsp.Content = "R$ " + Pagamento.SalarioEsperado();
-                MainContext.lblMedia.Content = Pagamento.Media();
+                MainContext.ExibirValores();
 
                 this.Close();
             }

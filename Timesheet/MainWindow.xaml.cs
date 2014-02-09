@@ -32,9 +32,12 @@ namespace Timesheet
         public MainWindow()
         {
             InitializeComponent();
+            Configuracao.CarregarConfiguracoes();
+            Pagamento.CarregarDadosTimesheet();
 
             RegistrarStartup();
             IniciarArquivos();
+            ExibirValores();
 
             btnEntrada.Click += btnEntrada_Click;
             btnSair.Click += btnSair_Click;
@@ -93,26 +96,51 @@ namespace Timesheet
                 }
             }
 
-
             if (!Directory.Exists(Configuracao.PathConfig))
             {
                 Directory.CreateDirectory(Configuracao.PathConfig);
 
                 using (StreamWriter wr = new StreamWriter(Configuracao.Config, true))
                 {
+                    wr.WriteLine("# Dados para pagamento");
+                    wr.WriteLine("");
                     wr.WriteLine("HORA = 176");
                     wr.WriteLine("VALOR_HORA = 30");
-                    wr.WriteLine("QTD_DIAS_MES = 22");
+                    wr.WriteLine("QTD_FERIADOS = 0");
+                    wr.WriteLine("");
+                    wr.WriteLine("# Dados para exibição");
+                    wr.WriteLine("");
+                    wr.WriteLine("EXIBIR_PRETENCAO = true");
+                    wr.WriteLine("EXIBIR_VALOR_ATUAL = true");
+
                     wr.Close();
+
+                    MessageBox.Show("Arquivo de configuração criado em 'Meus Documento/Timesheet'
                 }
             }
 
-            lblValor.Content = "R$ " + Pagamento.Salario();
-            lblHrs.Content = Pagamento.Horas.ToString();
-            lblValorEsp.Content = "R$ " +  Pagamento.SalarioEsperado();
-            lblMedia.Content = Pagamento.Media();
-            lblHrsPretendidas.Content = Pagamento.HrsEsperadas.ToString();
+        }
 
+        public void ExibirValores()
+        {
+            if (Configuracao.ExibirPretencao)
+            {
+                lblValorEsp.Visibility = Visibility.Hidden;
+                lblValorEspTitulo.Visibility = Visibility.Hidden;
+            }
+
+            if (Configuracao.ExibirValor)
+            {
+                lblValor.Visibility = Visibility.Hidden;
+                lblValorTitulo.Visibility = Visibility.Hidden;
+            }
+
+            lblValor.Content = "R$ " + Pagamento.Salario();
+            lblHrs.Content = Pagamento.Horas.ToString("#.##");
+            lblValorEsp.Content = "R$ " + Pagamento.SalarioEsperado();
+            lblMedia.Content = Pagamento.Media();
+            lblHrsPretendidas.Content = Configuracao.HrsEsperadas.ToString();
+            lblDiasUtes.Content = Pagamento.QuantidadeDiasUteis();
         }
 
        /// <summary>
@@ -187,12 +215,6 @@ namespace Timesheet
                 btnSair.IsEnabled = true;
             }
         }
-
-        /// <summary>
-        /// Retorna dados das horas do usuário
-        /// </summary>
-        /// <returns></returns>
-        
 
         /// <summary>
         /// Evento de click para o botão Entrar

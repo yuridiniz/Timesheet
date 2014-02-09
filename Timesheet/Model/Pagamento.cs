@@ -12,30 +12,51 @@ namespace Timesheet.Model
     {
         public static double Horas { get; set; }
         public static int DiasTrabalhados { get; set; }
-        public static double HrsEsperadas { get; set; }
-        public static double QtdDiasNoMes { get; set; }
-        public static double ValorHr { get; set; }
+
+        public static int QuantidadeDiasUteis()
+        {
+            var qtdDias = 0;
+            var dataAtual = DateTime.Now;
+            dataAtual = dataAtual.AddDays((dataAtual.Day - 1) * -1);
+            var mesAtual = dataAtual.Month;
+
+            while(dataAtual.Month == mesAtual)
+            {
+                if (dataAtual.DayOfWeek != DayOfWeek.Sunday &&
+                    dataAtual.DayOfWeek != DayOfWeek.Saturday)
+                    qtdDias++;
+
+                dataAtual = dataAtual.AddDays(1);
+            }
+
+            return qtdDias - Configuracao.QtdFeriados;
+        }
 
         public static string Salario()
         {
-            DadosDoPagamento();
-            return Convert.ToString(Horas * ValorHr);
+            return (Horas * Configuracao.ValorHr).ToString("#.##");
         }
 
         public static string SalarioEsperado()
         {
-            DadosDoPagamento();
-            return Convert.ToString(HrsEsperadas * ValorHr);
+            return (Configuracao.HrsEsperadas * Configuracao.ValorHr).ToString("#.##");
         }
 
         public static string Media()
         {
-            DadosDoPagamento();
-            var media = (HrsEsperadas - Horas) / (QtdDiasNoMes - DiasTrabalhados);
-            return new DateTime(2014, 1, 1, 0, 0, 0).AddHours(media).ToShortTimeString();
+            var media = (Configuracao.HrsEsperadas - Horas) / (QuantidadeDiasUteis() - DiasTrabalhados);
+
+            if (media < 0)
+                return "00:00";
+            else if (media >= 24)
+                return "Mais que 24h";
+
+            var hrsDiarias = new DateTime(2014, 1, 1, 0, 0, 0).AddHours(media).ToShortTimeString();
+
+            return hrsDiarias; 
         }
 
-        private static void DadosDoPagamento()
+        public static void CarregarDadosTimesheet()
         {
             using (StreamReader sr = new StreamReader(Configuracao.Path))
             {
@@ -45,6 +66,7 @@ namespace Timesheet.Model
 
                 //Para sair do cabeçalho
                 linha = sr.ReadLine();
+
                 if (linha != null)
                     DiasTrabalhados = 1;
 
@@ -65,35 +87,13 @@ namespace Timesheet.Model
                     linha = sr.ReadLine();
 
                     if (linha != null)
-                    {
                         if (linhaAnterior.Split(';')[0].Trim() != linha.Split(';')[0].Trim())
                             DiasTrabalhados++;
-                    }
                 }
 
                 Horas = listHoras.Sum();
-
-                sr.Close();
-            }
-
-            //Ler as configurações do usuário
-            using (StreamReader sr = new StreamReader(Configuracao.Config))
-            {
-                var linha = sr.ReadLine();
-                var dados = linha.Split('=');
-                HrsEsperadas = Convert.ToInt32(dados[1].Trim());
-
-                linha = sr.ReadLine();
-                dados = linha.Split('=');
-                ValorHr = Convert.ToInt32(dados[1].Trim());
-
-                linha = sr.ReadLine();
-                dados = linha.Split('=');
-                QtdDiasNoMes = Convert.ToInt32(dados[1].Trim());
-
                 sr.Close();
             }
         }
-
     }
 }
