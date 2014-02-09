@@ -25,8 +25,9 @@ namespace Timesheet
     /// </summary>
     public partial class MainWindow : Window
     {
-        public static string Diretorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/RelatorioCatraca/";
-        public static string Path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/RelatorioCatraca/Relatorio.txt";
+        
+
+        //public Pagamento pagamento = new Pagamento();
 
         public MainWindow()
         {
@@ -62,62 +63,13 @@ namespace Timesheet
         /// </summary>
         private void IniciarArquivos()
         {
-            if (File.Exists(Path))
+            if (File.Exists(Configuracao.Path))
             {
                 try
                 {
-                    var linha = string.Empty;
-
-                    using (StreamReader sr = new StreamReader(Path))
-                    {
-                        linha = sr.ReadLine();
-                        var linhaAux = string.Empty;
-
-                        var hasLinha = true;
-
-                        while (hasLinha)
-                        {
-                            linhaAux = sr.ReadLine();
-
-                            if (linhaAux == null)
-                                hasLinha = false;
-                            else
-                                linha = linhaAux;
-                        }
-
-                        sr.Close();
-                    }
-
-                    var UltimoDiaRegistrado = Convert.ToInt32(linha.Split('/')[0]) + 1;
-                    var Hoje = Convert.ToInt32(DateTime.Now.Day);
-
-                    while (UltimoDiaRegistrado < Hoje)
-                    {
-                        var registro = new Registro();
-                        //Remove 3 minutos para bater com o timesheet do papel
-
-                        registro.Dia = UltimoDiaRegistrado.ToString() + ";";
-                        registro.Entrada = ";";
-                        registro.Conferir = ";";
-                        registro.Saida = ";";
-                        registro.Atividade = "";
-
-
-                        registro.RegistrarEntrada();
-                        registro.RegistrarSaida();
-
-                        UltimoDiaRegistrado++;
-                    }
-
-
-                    var linhaStart = linha.Length - 3;
-                    var entradaRegistada = linha.Substring(linhaStart, linha.Length - linhaStart).Contains(" ; ");
-                    if (entradaRegistada)
-                    {
-                        btnEntrada.IsEnabled = false;
-                        btnSair.IsEnabled = true;
-                    }
-
+                    var ultimaLinha = UltimoRegistro();
+                    RegistrarFeriado(ultimaLinha);
+                    AplicarEstadoBtn(ultimaLinha);
                 }
                 catch (Exception ex)
                 {
@@ -126,10 +78,10 @@ namespace Timesheet
             }
             else
             {
-                if (!Directory.Exists(Diretorio))
-                    Directory.CreateDirectory(Diretorio);
-                    
-                using (StreamWriter wr = new StreamWriter(MainWindow.Path, true))
+                if (!Directory.Exists(Configuracao.Diretorio))
+                    Directory.CreateDirectory(Configuracao.Diretorio);
+
+                using (StreamWriter wr = new StreamWriter(Configuracao.Path, true))
                 {
                     wr.Write("Dia;");
                     wr.Write("Entrada;");
@@ -140,7 +92,107 @@ namespace Timesheet
                     wr.Close();
                 }
             }
+
+
+            if (!Directory.Exists(Configuracao.PathConfig))
+            {
+                Directory.CreateDirectory(Configuracao.PathConfig);
+
+                using (StreamWriter wr = new StreamWriter(Configuracao.Config, true))
+                {
+                    wr.WriteLine("HORA = 176");
+                    wr.WriteLine("VALOR_HORA = 30");
+                    wr.WriteLine("QTD_DIAS_MES = 22");
+                    wr.Close();
+                }
+            }
+
+            lblValor.Content = "R$ " + Pagamento.Salario();
+            lblHrs.Content = Pagamento.Horas.ToString();
+            lblValorEsp.Content = "R$ " +  Pagamento.SalarioEsperado();
+            lblMedia.Content = Pagamento.Media();
+            lblHrsPretendidas.Content = Pagamento.HrsEsperadas.ToString();
+
         }
+
+       /// <summary>
+       /// Varre o registro.txt e retorna ultimo dia cadastrado
+       /// </summary>
+       /// <returns>Ultimo dia cadastrado</returns>
+        private string UltimoRegistro()
+        {
+            var linha = string.Empty;
+            using (StreamReader sr = new StreamReader(Configuracao.Path))
+            {
+                linha = sr.ReadLine();
+                var linhaAux = string.Empty;
+
+                var hasLinha = true;
+
+                while (hasLinha)
+                {
+                    linhaAux = sr.ReadLine();
+
+                    if (linhaAux == null)
+                        hasLinha = false;
+                    else
+                        linha = linhaAux;
+                }
+
+                sr.Close();
+            }
+
+            return linha;
+        }
+
+        /// <summary>
+        /// Recebe o ultimo registro e grava registros em branco até o dia de hoje
+        /// </summary>
+        /// <param name="ultimoDia">Ultimo dia cadastrado (linha completa)</param>
+        private void RegistrarFeriado(string ultimoDia)
+        {
+            var UltimoDiaRegistrado = Convert.ToInt32(ultimoDia.Split('/')[0]) + 1;
+            var Hoje = DateTime.Now.Day;
+
+            while (UltimoDiaRegistrado < Hoje)
+            {
+                var registro = new Registro();
+
+                registro.Dia = UltimoDiaRegistrado.ToString() + ";";
+                registro.Entrada = ";";
+                registro.Conferir = ";";
+                registro.Saida = ";";
+                registro.Atividade = "";
+
+
+                registro.RegistrarEntrada();
+                registro.RegistrarSaida();
+
+                UltimoDiaRegistrado++;
+            }
+
+        }
+
+        /// <summary>
+        /// Verifica qual foi a ultima ação salva e e habilita o botão para dar seguencia aos registros
+        /// </summary>
+        /// <param name="ultimaLinha"></param>
+        public void AplicarEstadoBtn(string ultimaLinha)
+        {
+            var linhaStart = ultimaLinha.Length - 3;
+            var entradaRegistada = ultimaLinha.Substring(linhaStart, ultimaLinha.Length - linhaStart).Contains(" ; ");
+            if (entradaRegistada)
+            {
+                btnEntrada.IsEnabled = false;
+                btnSair.IsEnabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Retorna dados das horas do usuário
+        /// </summary>
+        /// <returns></returns>
+        
 
         /// <summary>
         /// Evento de click para o botão Entrar
@@ -155,7 +207,7 @@ namespace Timesheet
                 //Remove 3 minutos para bater com o timesheet do papel
 
                 registro.Dia = DateTime.Now.ToString("dd/MM");
-                registro.Entrada = DateTime.Now.AddMinutes(-3).ToLongTimeString();
+                registro.Entrada = DateTime.Now.AddMinutes(-3).ToShortTimeString();
                 registro.Conferir = (ckbConferir.IsChecked == true ? "Conferir" : "OK");
 
                 registro.RegistrarEntrada();
@@ -180,5 +232,7 @@ namespace Timesheet
             var desc = new DescricaoAtividades(this);
             desc.Show();
         }
+
+        
     }
 }

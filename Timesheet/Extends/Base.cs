@@ -11,11 +11,10 @@ namespace Controller.Extends
 {
     public static class Base
     {
-        
 
         public static void RegistrarEntrada(this Registro registro)
         {
-            using (StreamWriter wr = new StreamWriter(MainWindow.Path, true))
+            using (StreamWriter wr = new StreamWriter(Configuracao.Path, true))
             {
                 wr.WriteLine("");
                 wr.Write(registro.Dia + " ; ");
@@ -27,7 +26,7 @@ namespace Controller.Extends
 
         public static void RegistrarSaida(this Registro registro)
         {
-            using (StreamWriter wr = new StreamWriter(MainWindow.Path, true))
+            using (StreamWriter wr = new StreamWriter(Configuracao.Path, true))
             {
                 wr.Write(registro.Saida + " ; ");
                 wr.Write(registro.Conferir + " ; ");

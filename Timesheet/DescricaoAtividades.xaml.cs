@@ -45,7 +45,7 @@ namespace Timesheet
                 var registro = new Registro();
                 //Adiciona 3 minutus para bater com o timesheet de papel
 
-                registro.Saida = DateTime.Now.AddMinutes(3).ToLongTimeString(); 
+                registro.Saida = DateTime.Now.AddMinutes(3).ToShortTimeString(); 
                 registro.Atividade = txtAtividade.Text;
                 registro.Conferir = (MainContext.ckbConferir.IsChecked == true ? "Conferir" : "OK");
 
@@ -53,6 +53,12 @@ namespace Timesheet
 
                 MainContext.btnEntrada.IsEnabled = true;
                 MainContext.btnSair.IsEnabled = false;
+
+                MainContext.lblHrsPretendidas.Content = Pagamento.HrsEsperadas.ToString();
+                MainContext.lblValor.Content = "R$ " + Pagamento.Salario();
+                MainContext.lblHrs.Content = Pagamento.Horas.ToString();
+                MainContext.lblValorEsp.Content = "R$ " + Pagamento.SalarioEsperado();
+                MainContext.lblMedia.Content = Pagamento.Media();
 
                 this.Close();
             }
