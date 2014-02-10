@@ -87,7 +87,7 @@ namespace Timesheet.Model
                     linha = sr.ReadLine();
 
                     if (linha != null)
-                        if (linhaAnterior.Split(';')[0].Trim() != linha.Split(';')[0].Trim())
+                        if (linhaAnterior.Split(';')[0].Trim() != linha.Split(';')[0].Trim() && !string.IsNullOrWhiteSpace(dados[3]))
                             DiasTrabalhados++;
                 }
 
