@@ -74,7 +74,7 @@ namespace Timesheet.Model
                 {
                     var dados = linha.Split(';');
 
-                    if (dados.Length > 4)
+                    if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
                     {
                         var entrada = Convert.ToDateTime(dados[1]);
                         var saida = Convert.ToDateTime(dados[3]);
@@ -91,7 +91,7 @@ namespace Timesheet.Model
                             DiasTrabalhados++;
                 }
 
-                Horas = listHoras.Sum();
+                Horas = Convert.ToInt32(listHoras.Sum());
                 sr.Close();
             }
         }

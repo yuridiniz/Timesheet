@@ -32,11 +32,13 @@ namespace Timesheet
         public MainWindow()
         {
             InitializeComponent();
-            Configuracao.CarregarConfiguracoes();
-            Pagamento.CarregarDadosTimesheet();
 
             RegistrarStartup();
             IniciarArquivos();
+            
+            Configuracao.CarregarConfiguracoes();
+            Pagamento.CarregarDadosTimesheet();
+
             ExibirValores();
 
             btnEntrada.Click += btnEntrada_Click;

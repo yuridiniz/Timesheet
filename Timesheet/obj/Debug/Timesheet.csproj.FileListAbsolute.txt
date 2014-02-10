@@ -28,3 +28,17 @@ C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\bin\Debug\Timesheet.exe
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\bin\Debug\Timesheet.pdb
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.exe
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.pdb
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\bin\Debug\Timesheet.exe.config
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.exe
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.pdb
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\bin\Debug\Timesheet.exe
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\bin\Debug\Timesheet.pdb
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\DescricaoAtividades.baml
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\MainWindow.baml
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\DescricaoAtividades.g.cs
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\MainWindow.g.cs
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\App.g.cs
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet_MarkupCompile.cache
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.g.resources
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.Properties.Resources.resources
+C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.csproj.GenerateResource.Cache
