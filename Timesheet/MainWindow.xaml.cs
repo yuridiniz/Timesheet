@@ -125,13 +125,13 @@ namespace Timesheet
 
         public void ExibirValores()
         {
-            if (Configuracao.ExibirPretencao)
+            if (!Configuracao.ExibirPretencao)
             {
                 lblValorEsp.Visibility = Visibility.Hidden;
                 lblValorEspTitulo.Visibility = Visibility.Hidden;
             }
 
-            if (Configuracao.ExibirValor)
+            if (!Configuracao.ExibirValor)
             {
                 lblValor.Visibility = Visibility.Hidden;
                 lblValorTitulo.Visibility = Visibility.Hidden;
