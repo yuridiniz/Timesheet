@@ -138,7 +138,7 @@ namespace Timesheet
             }
 
             lblValor.Content = "R$ " + Pagamento.Salario();
-            lblHrs.Content = Pagamento.Horas.ToString("#.##");
+            lblHrs.Content = Pagamento.Horas.ToString();
             lblValorEsp.Content = "R$ " + Pagamento.SalarioEsperado();
             lblMedia.Content = Pagamento.Media();
             lblHrsPretendidas.Content = Configuracao.HrsEsperadas.ToString();

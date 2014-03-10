@@ -34,7 +34,7 @@ namespace Timesheet.Model
 
         public static string Salario()
         {
-            return (Horas * Configuracao.ValorHr).ToString("#.##");
+            return (Horas * Configuracao.ValorHr).ToString();
         }
 
         public static string SalarioEsperado()
