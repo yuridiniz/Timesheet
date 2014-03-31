@@ -73,8 +73,12 @@ namespace Timesheet
                 try
                 {
                     var ultimaLinha = UltimoRegistro();
-                    RegistrarFeriado(ultimaLinha);
-                    AplicarEstadoBtn(ultimaLinha);
+
+                    if (!string.IsNullOrEmpty(ultimaLinha))
+                    {
+                        RegistrarFeriado(ultimaLinha);
+                        AplicarEstadoBtn(ultimaLinha);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -181,24 +185,28 @@ namespace Timesheet
         /// <param name="ultimoDia">Ultimo dia cadastrado (linha completa)</param>
         private void RegistrarFeriado(string ultimoDia)
         {
-            var UltimoDiaRegistrado = Convert.ToInt32(ultimoDia.Split('/')[0]) + 1;
-            var Hoje = DateTime.Now.Day;
-
-            while (UltimoDiaRegistrado < Hoje)
+            var dia = ultimoDia.Split('/');
+            if(dia.Length > 1)
             {
-                var registro = new Registro();
+                var UltimoDiaRegistrado = Convert.ToInt32(dia[0]) + 1;
+                var Hoje = DateTime.Now.Day;
 
-                registro.Dia = UltimoDiaRegistrado.ToString() + ";";
-                registro.Entrada = ";";
-                registro.Conferir = ";";
-                registro.Saida = ";";
-                registro.Atividade = "";
+                while (UltimoDiaRegistrado < Hoje)
+                {
+                    var registro = new Registro();
+
+                    registro.Dia = UltimoDiaRegistrado.ToString() + ";";
+                    registro.Entrada = ";";
+                    registro.Conferir = ";";
+                    registro.Saida = ";";
+                    registro.Atividade = "";
 
 
-                registro.RegistrarEntrada();
-                registro.RegistrarSaida();
+                    registro.RegistrarEntrada();
+                    registro.RegistrarSaida();
 
-                UltimoDiaRegistrado++;
+                    UltimoDiaRegistrado++;
+                }
             }
 
         }
