@@ -16,6 +16,11 @@
                         <Image Width="14" Source="/Timesheet;component/Images/config.png" />
                     </StackPanel>
                 </Button>
+                <Button Name="btnExportar" ToolTip="Exportar para modelo excel">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="14" Source="/Timesheet;component/Images/config.png" />
+                    </StackPanel>
+                </Button>
             </ToolBar>
 
         </ToolBarTray>

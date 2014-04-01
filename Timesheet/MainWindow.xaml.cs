@@ -17,6 +17,7 @@ using Controller.Extends;
 using System.IO;
 using Microsoft.Win32;
 using System.Reflection;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace Timesheet
 {
@@ -43,6 +44,7 @@ namespace Timesheet
 
             btnEntrada.Click += btnEntrada_Click;
             btnSair.Click += btnSair_Click;
+            btnExportar.Click += btnExportar_Click;
 
         }
 
@@ -251,6 +253,35 @@ namespace Timesheet
             {
                 MessageBox.Show(ex.Message);
             }
+
+        }
+
+        /// <summary>
+        /// Evento de click para o botão exportar
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="e"></param>
+        private void btnExportar_Click(object s, EventArgs e)
+        {
+            //var desc = new EXCEL.Workbook();
+            OpenFileDialog dialogo = new OpenFileDialog();
+            dialogo.ShowDialog();
+
+            var timesheetExcel = dialogo.FileName;
+
+            var exApp = new Excel.Application();
+            var work = exApp.Workbooks.Open(timesheetExcel,0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "",true, false, 0, true, false, false);
+
+            Excel.Sheets excelSheets = work.Worksheets;
+
+            string currentSheet = "Yuri";
+            Excel.Worksheet excelWorksheet = (Excel.Worksheet)excelSheets.get_Item(0);
+
+            Excel.Range excelCell =
+                (Excel.Range)excelWorksheet.get_Range("H9", "H9");
+            excelCell.Value = "Vinicius bixona";
+            work.Save();
+            work.Close();
 
         }
 
