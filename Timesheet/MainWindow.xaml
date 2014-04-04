@@ -11,7 +11,7 @@
         
         <ToolBarTray>
             <ToolBar Width="400">
-                <Button ToolTip="Configuração de pagamento">
+                <Button Name="btnConfig"  ToolTip="Configuração de pagamento">
                     <StackPanel Orientation="Horizontal">
                         <Image Width="14" Source="/Timesheet;component/Images/config.png" />
                     </StackPanel>

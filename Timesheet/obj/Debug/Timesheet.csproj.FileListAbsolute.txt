@@ -14,7 +14,6 @@ c:\users\yuri\documents\visual studio 2012\Timesheet\Timesheet\Timesheet\obj\Deb
 c:\users\yuri\documents\visual studio 2012\Timesheet\Timesheet\Timesheet\obj\Debug\DescricaoAtividades.g.cs
 C:\Users\Yuri\Documents\Visual Studio 2012\Timesheet\Timesheet\Timesheet\obj\Debug\Timesheet.csprojResolveAssemblyReference.cache
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\bin\Debug\Timesheet.exe.config
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.csprojResolveAssemblyReference.cache
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\DescricaoAtividades.baml
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\MainWindow.baml
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\DescricaoAtividades.g.cs

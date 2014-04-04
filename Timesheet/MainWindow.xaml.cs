@@ -18,6 +18,7 @@ using System.IO;
 using Microsoft.Win32;
 using System.Reflection;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Threading;
 
 namespace Timesheet
 {
@@ -26,6 +27,7 @@ namespace Timesheet
     /// </summary>
     public partial class MainWindow : Window
     {
+        string xp = "foi";
         
 
         //public Pagamento pagamento = new Pagamento();
@@ -45,6 +47,7 @@ namespace Timesheet
             btnEntrada.Click += btnEntrada_Click;
             btnSair.Click += btnSair_Click;
             btnExportar.Click += btnExportar_Click;
+            btnConfig.Click += btnConfig_Click;
 
         }
 
@@ -238,10 +241,10 @@ namespace Timesheet
             try
             {
                 var registro = new Registro();
-                //Remove 3 minutos para bater com o timesheet do papel
+                //Remove 4 minutos para bater com o timesheet do papel
 
                 registro.Dia = DateTime.Now.ToString("dd/MM");
-                registro.Entrada = DateTime.Now.AddMinutes(-3).ToShortTimeString();
+                registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
                 registro.Conferir = (ckbConferir.IsChecked == true ? "Conferir" : "OK");
 
                 registro.RegistrarEntrada();
@@ -275,7 +278,7 @@ namespace Timesheet
             Excel.Sheets excelSheets = work.Worksheets;
 
             string currentSheet = "Yuri";
-            Excel.Worksheet excelWorksheet = (Excel.Worksheet)excelSheets.get_Item(0);
+            Excel.Worksheet excelWorksheet = (Excel.Worksheet)excelSheets.get_Item(currentSheet);
 
             Excel.Range excelCell =
                 (Excel.Range)excelWorksheet.get_Range("H9", "H9");
@@ -283,6 +286,19 @@ namespace Timesheet
             work.Save();
             work.Close();
 
+        }
+
+        private void btnConfig_Click(object s, EventArgs e)
+        {
+            var slowTask = Task.Run<string>(() => teste());
+            System.Diagnostics.Process.Start(Configuracao.Diretorio);
+        }
+
+        public string teste()
+        {
+            Thread.Sleep(5000);
+            MessageBox.Show(xp);
+            return "foi";
         }
 
         /// <summary>
