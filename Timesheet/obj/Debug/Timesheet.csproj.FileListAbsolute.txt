@@ -41,3 +41,4 @@ C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesh
 C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.g.resources
 C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.Properties.Resources.resources
 C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.csproj.GenerateResource.Cache
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.csprojResolveAssemblyReference.cache

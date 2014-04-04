@@ -27,10 +27,6 @@ namespace Timesheet
     /// </summary>
     public partial class MainWindow : Window
     {
-        string xp = "foi";
-        
-
-        //public Pagamento pagamento = new Pagamento();
 
         public MainWindow()
         {
@@ -296,9 +292,8 @@ namespace Timesheet
 
         public string teste()
         {
-            Thread.Sleep(5000);
-            MessageBox.Show(xp);
-            return "foi";
+            Thread.Sleep(8000);
+            return "outra Thread";
         }
 
         /// <summary>
