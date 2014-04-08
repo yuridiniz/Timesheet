@@ -19,6 +19,7 @@ using Microsoft.Win32;
 using System.Reflection;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Threading;
+using System.Diagnostics;
 
 namespace Timesheet
 {
@@ -269,18 +270,61 @@ namespace Timesheet
             var timesheetExcel = dialogo.FileName;
 
             var exApp = new Excel.Application();
+            for(var i = 0; i < Process.GetProcessesByName("EXCEL.EXE").Length; i++)
+            {
+                Process.GetProcessesByName("EXCEL.EXE")[i].Kill();
+            }
             var work = exApp.Workbooks.Open(timesheetExcel,0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "",true, false, 0, true, false, false);
 
             Excel.Sheets excelSheets = work.Worksheets;
 
             string currentSheet = "Yuri";
-            Excel.Worksheet excelWorksheet = (Excel.Worksheet)excelSheets.get_Item(currentSheet);
 
-            Excel.Range excelCell =
-                (Excel.Range)excelWorksheet.get_Range("H9", "H9");
-            excelCell.Value = "Vinicius bixona";
-            work.Save();
-            work.Close();
+            using (StreamReader sr = new StreamReader(Configuracao.Path))
+            {
+                var linha = sr.ReadLine();
+                linha = sr.ReadLine();
+                var diaAnterior = string.Empty;
+                var linhaInicial = 5;
+                while (linha != null)
+                {
+                    var dados = linha.Split(';');
+
+                    if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
+                    {
+                        var dia = Convert.ToDateTime(dados[0]).ToShortDateString();
+
+                        var entrada = Convert.ToDateTime(dados[1]);
+                        var saida = Convert.ToDateTime(dados[3]);
+                        var desc = dados[5];
+
+                        var totalHrs = (saida - entrada).TotalHours;
+
+                        Excel.Worksheet excelWorksheet = (Excel.Worksheet)excelSheets.get_Item(currentSheet);
+                        Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaInicial, "D" + linhaInicial);
+                        Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaInicial, "E" + linhaInicial);
+                        Excel.Range cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaInicial, "H" + linhaInicial);
+
+                        cellEntrada.Value = entrada.ToShortTimeString();
+                        cellSaida.Value = saida.ToShortTimeString();
+                        cellDesc.Value = desc;
+
+                        diaAnterior = dia;
+                    }
+
+                    linhaInicial++;
+                    linha = sr.ReadLine();
+                }
+
+                work.Save();
+                work.Close();
+                sr.Close();
+            }
+
+            for (var i = 0; i < Process.GetProcessesByName("EXCEL.EXE").Length; i++)
+            {
+                Process.GetProcessesByName("EXCEL.EXE")[i].Kill();
+            }
 
         }
 
