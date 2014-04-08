@@ -263,22 +263,26 @@ namespace Timesheet
         /// <param name="e"></param>
         private void btnExportar_Click(object s, EventArgs e)
         {
+            for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
+                Process.GetProcessesByName("EXCEL")[i].Kill();
+
             //var desc = new EXCEL.Workbook();
             OpenFileDialog dialogo = new OpenFileDialog();
             dialogo.ShowDialog();
 
             var timesheetExcel = dialogo.FileName;
 
+            if (string.IsNullOrEmpty(timesheetExcel))
+                return;
+
             var exApp = new Excel.Application();
-            for(var i = 0; i < Process.GetProcessesByName("EXCEL.EXE").Length; i++)
-            {
-                Process.GetProcessesByName("EXCEL.EXE")[i].Kill();
-            }
+            
             var work = exApp.Workbooks.Open(timesheetExcel,0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "",true, false, 0, true, false, false);
 
             Excel.Sheets excelSheets = work.Worksheets;
 
             string currentSheet = "Yuri";
+            Excel.Worksheet excelWorksheet = (Excel.Worksheet)excelSheets.get_Item(currentSheet);
 
             using (StreamReader sr = new StreamReader(Configuracao.Path))
             {
@@ -299,11 +303,20 @@ namespace Timesheet
                         var desc = dados[5];
 
                         var totalHrs = (saida - entrada).TotalHours;
-
-                        Excel.Worksheet excelWorksheet = (Excel.Worksheet)excelSheets.get_Item(currentSheet);
                         Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaInicial, "D" + linhaInicial);
                         Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaInicial, "E" + linhaInicial);
-                        Excel.Range cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaInicial, "H" + linhaInicial);
+                        Excel.Range cellDesc = cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaInicial, "H" + linhaInicial);
+                        Excel.Range cellRotulo = (Excel.Range)excelWorksheet.get_Range("A" + linhaInicial, "A" + linhaInicial);
+
+
+                        var valor = Convert.ToString(cellRotulo.Value);
+                        if (valor == "Total da semana:")
+                        {
+                            linhaInicial++;
+                            cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaInicial, "D" + linhaInicial);
+                            cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaInicial, "E" + linhaInicial);
+                            cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaInicial, "H" + linhaInicial);
+                        } 
 
                         cellEntrada.Value = entrada.ToShortTimeString();
                         cellSaida.Value = saida.ToShortTimeString();
@@ -314,6 +327,8 @@ namespace Timesheet
 
                     linhaInicial++;
                     linha = sr.ReadLine();
+
+                    
                 }
 
                 work.Save();
@@ -321,9 +336,9 @@ namespace Timesheet
                 sr.Close();
             }
 
-            for (var i = 0; i < Process.GetProcessesByName("EXCEL.EXE").Length; i++)
+            for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
             {
-                Process.GetProcessesByName("EXCEL.EXE")[i].Kill();
+                Process.GetProcessesByName("EXCEL")[i].Kill();
             }
 
         }
