@@ -279,13 +279,15 @@ namespace Timesheet
                     return;
 
                 var exApp = new Excel.Application();
-
                 var work = exApp.Workbooks.Open(timesheetExcel, 0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "", true, false, 0, true, false, false);
 
-                Excel.Sheets excelSheets = work.Worksheets;
+                Excel.Worksheet excelWorksheet = null;
+                foreach (Excel.Worksheet worksheet in work.Worksheets)
+                    excelWorksheet = worksheet;
 
-                string currentSheet = "Yuri";
-                Excel.Worksheet excelWorksheet = (Excel.Worksheet)excelSheets.get_Item(currentSheet);
+                if (excelWorksheet == null)
+                    return;
+                //Excel.Worksheet excelWorksheet = (Excel.Worksheet)work.Worksheets.get_Item(currentSheet.Name);
 
                 using (StreamReader sr = new StreamReader(Configuracao.Path))
                 {
