@@ -29,7 +29,9 @@ namespace PN.Timesheet
 
         private void grdConteudo_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            Storyboard FecharMenu = Resources["AnimFecharMenu"] as Storyboard;
+            grdConteudo.MouseDown -= grdConteudo_MouseDown;
+
+            Storyboard FecharMenu = Application.Current.Resources["AnimFecharMenu"] as Storyboard;
             FecharMenu.Begin(grdMenu);
         }
 
