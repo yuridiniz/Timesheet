@@ -288,47 +288,36 @@ namespace Timesheet
             {
                 var linha = sr.ReadLine();
                 linha = sr.ReadLine();
-                var diaAnterior = string.Empty;
-                var linhaInicial = 5;
+                int linhaEditavel = 1;
+                int linhaEditavelAnterior = linhaEditavel;
                 while (linha != null)
                 {
                     var dados = linha.Split(';');
-
                     if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
                     {
-                        var dia = Convert.ToDateTime(dados[0]).ToShortDateString();
+                        linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet, linhaEditavel - 1);
+                        if (linhaEditavel == linhaEditavelAnterior)
+                            linhaEditavel++;
 
                         var entrada = Convert.ToDateTime(dados[1]);
                         var saida = Convert.ToDateTime(dados[3]);
                         var desc = dados[5];
 
                         var totalHrs = (saida - entrada).TotalHours;
-                        Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaInicial, "D" + linhaInicial);
-                        Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaInicial, "E" + linhaInicial);
-                        Excel.Range cellDesc = cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaInicial, "H" + linhaInicial);
-                        Excel.Range cellRotulo = (Excel.Range)excelWorksheet.get_Range("A" + linhaInicial, "A" + linhaInicial);
 
-
-                        var valor = Convert.ToString(cellRotulo.Value);
-                        if (valor == "Total da semana:")
-                        {
-                            linhaInicial++;
-                            cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaInicial, "D" + linhaInicial);
-                            cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaInicial, "E" + linhaInicial);
-                            cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaInicial, "H" + linhaInicial);
-                        } 
+                        Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaEditavel, "D" + linhaEditavel);
+                        Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaEditavel, "E" + linhaEditavel);
+                        Excel.Range cellDesc = cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaEditavel, "H" + linhaEditavel);
 
                         cellEntrada.Value = entrada.ToShortTimeString();
                         cellSaida.Value = saida.ToShortTimeString();
                         cellDesc.Value = desc;
 
-                        diaAnterior = dia;
+                        linhaEditavelAnterior = linhaEditavel;
+
                     }
 
-                    linhaInicial++;
                     linha = sr.ReadLine();
-
-                    
                 }
 
                 work.Save();
@@ -347,6 +336,33 @@ namespace Timesheet
         {
             var slowTask = Task.Run<string>(() => teste());
             System.Diagnostics.Process.Start(Configuracao.Diretorio);
+        }
+
+        public int ObterLinhaDaData(DateTime data, Excel.Worksheet excelWorksheet, int startIndex)
+        {
+            var dataLinha = new DateTime();
+
+            while(data.ToShortDateString() != dataLinha.ToShortDateString())
+            {
+                startIndex++;
+
+                Excel.Range cellRotulo = (Excel.Range)excelWorksheet.get_Range("A" + startIndex, "A" + startIndex);
+
+                if (cellRotulo.Value != null)
+                {
+                    var valor = Convert.ToString(cellRotulo.Value);
+                    var dataLinha2 = Convert.ToDateTime(dataLinha.ToShortDateString());
+                    var parse = DateTime.TryParse(valor, out dataLinha2);
+                    if (parse == true)
+                        dataLinha = dataLinha2;
+                }
+
+                if (startIndex == 100)
+                    return -1;
+
+            }
+
+            return startIndex;
         }
 
         public string teste()
