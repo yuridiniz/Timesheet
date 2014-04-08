@@ -287,7 +287,6 @@ namespace Timesheet
 
                 if (excelWorksheet == null)
                     return;
-                //Excel.Worksheet excelWorksheet = (Excel.Worksheet)work.Worksheets.get_Item(currentSheet.Name);
 
                 using (StreamReader sr = new StreamReader(Configuracao.Path))
                 {
