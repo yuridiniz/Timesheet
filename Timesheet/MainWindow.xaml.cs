@@ -264,83 +264,89 @@ namespace Timesheet
         /// <param name="e"></param>
         private void btnExportar_Click(object s, EventArgs e)
         {
-            try
-            {
-                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
-                    Process.GetProcessesByName("EXCEL")[i].Kill();
-
-                //var desc = new EXCEL.Workbook();
-                OpenFileDialog dialogo = new OpenFileDialog();
-                dialogo.ShowDialog();
-
-                var timesheetExcel = dialogo.FileName;
-
-                if (string.IsNullOrEmpty(timesheetExcel))
-                    return;
-
-                var exApp = new Excel.Application();
-                var work = exApp.Workbooks.Open(timesheetExcel, 0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "", true, false, 0, true, false, false);
-
-                Excel.Worksheet excelWorksheet = null;
-                foreach (Excel.Worksheet worksheet in work.Worksheets)
-                    excelWorksheet = worksheet;
-
-                if (excelWorksheet == null)
-                    return;
-
-                using (StreamReader sr = new StreamReader(Configuracao.Path))
+            Task.Run(() =>
                 {
-                    var linha = sr.ReadLine();
-                    linha = sr.ReadLine();
-                    int linhaEditavel = 1;
-                    int linhaEditavelAnterior = linhaEditavel;
-                    while (linha != null)
+                    try
                     {
-                        var dados = linha.Split(';');
-                        if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
+                        for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
+                            Process.GetProcessesByName("EXCEL")[i].Kill();
+
+                        //var desc = new EXCEL.Workbook();
+                        OpenFileDialog dialogo = new OpenFileDialog();
+                        dialogo.ShowDialog();
+
+                        var timesheetExcel = dialogo.FileName;
+
+                        if (string.IsNullOrEmpty(timesheetExcel))
+                            return;
+
+                        var exApp = new Excel.Application();
+                        var work = exApp.Workbooks.Open(timesheetExcel, 0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "", true, false, 0, true, false, false);
+
+                        Excel.Worksheet excelWorksheet = null;
+                        foreach (Excel.Worksheet worksheet in work.Worksheets)
+                            excelWorksheet = worksheet;
+
+                        if (excelWorksheet == null)
+                            return;
+
+                        using (StreamReader sr = new StreamReader(Configuracao.Path))
                         {
-                            linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet, linhaEditavel - 1);
-                            if (linhaEditavel == linhaEditavelAnterior)
-                                linhaEditavel++;
+                            var linha = sr.ReadLine();
+                            linha = sr.ReadLine();
+                            int linhaEditavel = 1;
+                            int linhaEditavelAnterior = linhaEditavel;
+                            while (linha != null)
+                            {
+                                var dados = linha.Split(';');
+                                if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
+                                {
+                                    linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet, linhaEditavel - 1);
+                                    if (linhaEditavel == linhaEditavelAnterior)
+                                        linhaEditavel++;
 
-                            var entrada = Convert.ToDateTime(dados[1]);
-                            var saida = Convert.ToDateTime(dados[3]);
-                            var desc = dados[5];
+                                    if (linhaEditavel != -1)
+                                    {
+                                        var entrada = Convert.ToDateTime(dados[1]);
+                                        var saida = Convert.ToDateTime(dados[3]);
+                                        var desc = dados[5];
 
-                            var totalHrs = (saida - entrada).TotalHours;
+                                        var totalHrs = (saida - entrada).TotalHours;
 
-                            Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaEditavel, "D" + linhaEditavel);
-                            Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaEditavel, "E" + linhaEditavel);
-                            Excel.Range cellDesc = cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaEditavel, "H" + linhaEditavel);
+                                        Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaEditavel, "D" + linhaEditavel);
+                                        Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaEditavel, "E" + linhaEditavel);
+                                        Excel.Range cellDesc = cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaEditavel, "H" + linhaEditavel);
 
-                            cellEntrada.Value = entrada.ToShortTimeString();
-                            cellSaida.Value = saida.ToShortTimeString();
-                            cellDesc.Value = desc;
+                                        cellEntrada.Value = entrada.ToShortTimeString();
+                                        cellSaida.Value = saida.ToShortTimeString();
+                                        cellDesc.Value = desc;
 
-                            linhaEditavelAnterior = linhaEditavel;
+                                        linhaEditavelAnterior = linhaEditavel;
+                                    }
 
+                                }
+
+                                linha = sr.ReadLine();
+                            }
+
+                            work.Save();
+                            work.Close();
+                            sr.Close();
                         }
 
-                        linha = sr.ReadLine();
+                        for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
+                        {
+                            Process.GetProcessesByName("EXCEL")[i].Kill();
+                        }
+
+                        Process.Start(timesheetExcel);
                     }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Ocorreu um erro durante o processo de exportação!");
 
-                    work.Save();
-                    work.Close();
-                    sr.Close();
-                }
-
-                MessageBox.Show("Exportado!");
-
-                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
-                {
-                    Process.GetProcessesByName("EXCEL")[i].Kill();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ocorreu um erro durante o processo de exportação!");
-
-            }
+                    }
+                });
 
         }
 
