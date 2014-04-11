@@ -304,6 +304,11 @@ namespace Timesheet
                                     linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet, linhaEditavel - 1);
                                     if (linhaEditavel == linhaEditavelAnterior)
                                         linhaEditavel++;
+                                    else if (linhaEditavel < linhaEditavelAnterior)
+                                    {
+                                        var diferenca = linhaEditavel - linhaEditavelAnterior;
+                                        linhaEditavel += (diferenca + 1);
+                                    }
 
                                     if (linhaEditavel != -1)
                                     {
