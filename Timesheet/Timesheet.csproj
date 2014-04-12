@@ -71,6 +71,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DB\DB.cs" />
     <Compile Include="DescricaoAtividades.xaml.cs">
       <DependentUpon>DescricaoAtividades.xaml</DependentUpon>
     </Compile>
@@ -115,6 +116,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\excel.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Repository\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
