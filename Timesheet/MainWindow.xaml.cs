@@ -318,7 +318,6 @@ namespace Timesheet
                         var dados = linha.Split(';');
                         if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
                         {
-                            Thread.Sleep(2500);
                             linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet, linhaEditavel - 1);
                             if (linhaEditavel == linhaEditavelAnterior)
                                 linhaEditavel++;
