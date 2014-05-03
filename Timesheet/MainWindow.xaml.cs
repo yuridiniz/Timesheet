@@ -106,7 +106,7 @@ namespace Timesheet
         {
             var hrsElapsed = Inactivity.GetLastInputTime();
             var ultimoRegistro = UltimoRegistro().Split(';');
-            if (ultimoRegistro.Length <= Configuracao.TempoInativo)
+            if (ultimoRegistro.Length <= 4)
             {
                 var entrada = DateTime.Parse(ultimoRegistro[0].Trim() + "/" + DateTime.Now.Year + " " + ultimoRegistro[1] + ":00");
                 var diferenca = DateTime.Now - entrada; 
@@ -122,7 +122,7 @@ namespace Timesheet
                     this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));       // important
                 }));
             }
-            if (hrsElapsed > 5)
+            if (hrsElapsed > Configuracao.TempoInativo)
             {
                 a.Elapsed -= Cronometro;
                 var data = DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString();
