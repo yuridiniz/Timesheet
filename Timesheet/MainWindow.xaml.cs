@@ -40,6 +40,12 @@ namespace Timesheet
         {
             InitializeComponent();
 
+            notifyIcon1 = new Forms.NotifyIcon();
+            notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
+            notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
+            notifyIcon1.Visible = false;
+            notifyIcon1.Text = "Timesheet";
+
             RegistrarStartup();
             IniciarArquivos();
             
@@ -64,12 +70,6 @@ namespace Timesheet
             btnConfig.Click += btnConfig_Click;
             StateChanged += MainWindow_StateChanged;
 
-
-            notifyIcon1 = new Forms.NotifyIcon();
-            notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
-            notifyIcon1.Icon =  new Icon(SystemIcons.Information, 40, 40);
-            notifyIcon1.Visible = false;
-            notifyIcon1.Text = "Timesheet";
 
 
         }
@@ -122,7 +122,7 @@ namespace Timesheet
                     this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));       // important
                 }));
             }
-            if (hrsElapsed > Configuracao.TempoInativo)
+            if (hrsElapsed > Configuracao.TempoInativo * 60)
             {
                 a.Elapsed -= Cronometro;
                 var data = DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString();

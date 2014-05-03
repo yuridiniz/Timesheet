@@ -39,6 +39,7 @@ namespace Controller.Extends
                 wr.Close();
             }
 
+
             contexto.notifyIcon1.BalloonTipTitle = "Timesheet";
             contexto.notifyIcon1.BalloonTipText = "Saída Registrada: " + registro.Saida;
             contexto.notifyIcon1.ShowBalloonTip(5000);
