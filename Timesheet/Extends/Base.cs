@@ -12,7 +12,7 @@ namespace Controller.Extends
     public static class Base
     {
 
-        public static void RegistrarEntrada(this Registro registro)
+        public static void RegistrarEntrada(this Registro registro, MainWindow contexto)
         {
             using (StreamWriter wr = new StreamWriter(Configuracao.Path, true))
             {
@@ -22,9 +22,13 @@ namespace Controller.Extends
                 wr.Write(registro.Conferir + " ; ");
                 wr.Close();
             }
+
+            contexto.notifyIcon1.BalloonTipTitle = "Timesheet";
+            contexto.notifyIcon1.BalloonTipText = "Entrada Registrada: " + registro.Entrada;
+            contexto.notifyIcon1.ShowBalloonTip(5000);
         }
 
-        public static void RegistrarSaida(this Registro registro)
+        public static void RegistrarSaida(this Registro registro, MainWindow contexto)
         {
             using (StreamWriter wr = new StreamWriter(Configuracao.Path, true))
             {
@@ -34,6 +38,10 @@ namespace Controller.Extends
 
                 wr.Close();
             }
+
+            contexto.notifyIcon1.BalloonTipTitle = "Timesheet";
+            contexto.notifyIcon1.BalloonTipText = "Saída Registrada: " + registro.Saida;
+            contexto.notifyIcon1.ShowBalloonTip(5000);
         }
     }
 }
