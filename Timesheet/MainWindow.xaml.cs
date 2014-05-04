@@ -68,9 +68,8 @@ namespace Timesheet
             btnSair.Click += btnSair_Click;
             btnExportar.Click += btnExportar_Click;
             btnConfig.Click += btnConfig_Click;
+            btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
             StateChanged += MainWindow_StateChanged;
-
-
 
         }
 
@@ -106,7 +105,9 @@ namespace Timesheet
         {
             var hrsElapsed = Inactivity.GetLastInputTime();
             var ultimoRegistro = UltimoRegistro().Split(';');
-            if (ultimoRegistro.Length <= 4)
+            bool VerificaEntradaRegistrada = ultimoRegistro.Length <= 4;
+
+            if (VerificaEntradaRegistrada)
             {
                 var entrada = DateTime.Parse(ultimoRegistro[0].Trim() + "/" + DateTime.Now.Year + " " + ultimoRegistro[1] + ":00");
                 var diferenca = DateTime.Now - entrada; 
@@ -114,27 +115,33 @@ namespace Timesheet
 
                 Dispatcher.Invoke(new Action(() =>
                 {
-                    //this.Activate();
-                    //this.Topmost = true;  // important
-                    //this.Topmost = false; // important
                     int hr = Convert.ToInt32(this.lblHrs.Content);
                     this.lblHrs.Content = (int)(Pagamento.Horas + diferenca.TotalSeconds / (60 * 60));       // important
                     this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));       // important
                 }));
             }
-            if (hrsElapsed > Configuracao.TempoInativo * 60)
+
+            if (hrsElapsed > Configuracao.TempoInativo * 0.1)
             {
                 a.Elapsed -= Cronometro;
                 var data = DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString();
                 Dispatcher.Invoke(new Action(() =>
                     {
-                        //this.Activate();
-                        //this.Topmost = true;  // important
-                        //this.Topmost = false; // important
+                        this.Hide();
+                        this.Activate();
+                        this.Topmost = true;  // important
+                        this.Topmost = false; // important
                         this.Focus();         // important
+
                     }));
-                Thread.Sleep(2000);
+
                 var resultado = MessageBox.Show("O Sistema ficou inativo desde " + data + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    this.Show();
+
+                }));
 
                 if (resultado == MessageBoxResult.Yes)
                 {
@@ -256,7 +263,7 @@ namespace Timesheet
             {
 
                 var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "ShutUser.log");
-                var resultado = MessageBox.Show("O sistema foi desligado as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                var resultado = MessageBox.Show("O sistema foi desligado as " + linha[0] + " deseja registrar como uma saída?", "shutdown detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
                 if (resultado == MessageBoxResult.Yes)
                 {
@@ -268,8 +275,6 @@ namespace Timesheet
                     registro.Conferir = "OK";
 
                     registro.RegistrarSaida(this);
-
-                    Thread.Sleep(3000);
 
                     registro = new Registro();
                     //Remove 4 minutos para bater com o timesheet do papel
@@ -283,9 +288,65 @@ namespace Timesheet
 
                 System.IO.File.Delete(Configuracao.Logs + "ShutUser.log");
             }
+            else if (System.IO.File.Exists(Configuracao.Logs + "SwUser.log"))
+            {
+                var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "SwUser.log");
+                this.Focus();
+                var resultado = MessageBox.Show("Foi registrado um logout as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                
+                if (resultado == MessageBoxResult.Yes)
+                {
+                    var registro = new Registro();
+                    //Adiciona 3 minutus para bater com o timesheet de papel
+
+                    registro.Saida = DateTime.Parse(linha[0]).AddMinutes(3).ToShortTimeString();
+                    registro.Atividade = " ";
+                    registro.Conferir = "OK";
+
+                    registro.RegistrarSaida(this);
+
+                    registro = new Registro();
+                    //Remove 4 minutos para bater com o timesheet do papel
+
+                    registro.Dia = DateTime.Now.ToString("dd/MM");
+                    registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                    registro.Conferir = "OK";
+
+                    registro.RegistrarEntrada(this);
+
+                }
+
+                System.IO.File.Delete(Configuracao.Logs + "SwUser.log");
+            }
+            else
+            {
+                var ultimaLinha = UltimoRegistro();
+                if (ultimaLinha.Contains("Dia;Entrada;Status;Saida;Status"))
+                {
+
+                    var resultado = MessageBox.Show("Registrar entrada?", "Iniciando mês", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                    if (resultado == MessageBoxResult.Yes)
+                    {
+                        var registro = new Registro();
+                        //Remove 4 minutos para bater com o timesheet do papel
+
+                        registro.Dia = DateTime.Now.ToString("dd/MM");
+                        registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                        registro.Conferir = "OK";
+
+                        registro.RegistrarEntrada(this);
+
+                    }
+                }
+
+            }
 
             if (!Directory.Exists(Configuracao.Logs))
                 Directory.CreateDirectory(Configuracao.Logs);
+
+            if (!Directory.Exists(Configuracao.Atividades))
+                File.Create(Configuracao.Atividades);
 
             if (File.Exists(Configuracao.Path))
             {

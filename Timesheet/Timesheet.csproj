@@ -61,8 +61,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CadastrarAtividade.xaml.cs">
+      <DependentUpon>CadastrarAtividade.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Model\Atividade.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="UserActivityHook.cs" />
+    <Page Include="CadastrarAtividade.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DescricaoAtividades.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
