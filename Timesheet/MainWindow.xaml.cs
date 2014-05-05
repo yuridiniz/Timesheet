@@ -224,10 +224,18 @@ namespace Timesheet
                 a.Elapsed += Cronometro;
                 if (System.IO.File.Exists(Configuracao.Logs + "SwUser.log"))
                 {
+                    this.Hide();
+                    this.Activate();
+                    this.Topmost = true;  // important
+                    this.Topmost = false; // important
+                    this.Focus();         // important
+
                     var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "SwUser.log");
-                    this.Focus();
                     var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
                     var resultado = MessageBox.Show("Foi registrado um logout as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                    this.Show();
+
                     if (resultado == MessageBoxResult.Yes)
                     {
                         var registro = new Registro();
@@ -295,12 +303,18 @@ namespace Timesheet
         {
             if (System.IO.File.Exists(Configuracao.Logs + "ShutUser.log"))
             {
-                this.Focus();
+                this.Hide();
+                this.Activate();
+                this.Topmost = true;  // important
+                this.Topmost = false; // important
+                this.Focus();         // important
 
                 var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "ShutUser.log");
                 var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
 
                 var resultado = MessageBox.Show("O sistema foi desligado as " + linha[0] + " deseja registrar como uma saída?", "shutdown detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                this.Hide();
 
                 if (resultado == MessageBoxResult.Yes)
                 {
@@ -327,12 +341,18 @@ namespace Timesheet
             }
             else if (System.IO.File.Exists(Configuracao.Logs + "SwUser.log"))
             {
-                this.Focus();
+                this.Hide();
+                this.Activate();
+                this.Topmost = true;  // important
+                this.Topmost = false; // important
+                this.Focus();         // important
 
                 var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "SwUser.log");
                 var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
                 var resultado = MessageBox.Show("Foi registrado um logout as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                
+
+                this.Hide();
+
                 if (resultado == MessageBoxResult.Yes)
                 {
                     var registro = new Registro();
@@ -362,8 +382,16 @@ namespace Timesheet
                 var ultimaLinha = UltimoRegistro();
                 if (ultimaLinha.Contains("Dia;Entrada;Status;Saida;Status"))
                 {
+                    this.Hide();
+                    this.Activate();
+                    this.Topmost = true;  // important
+                    this.Topmost = false; // important
+                    this.Focus();         // important
+
                     var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
                     var resultado = MessageBox.Show("Registrar entrada?", "Iniciando mês", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                    this.Hide();
 
                     if (resultado == MessageBoxResult.Yes)
                     {
