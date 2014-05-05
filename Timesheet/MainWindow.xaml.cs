@@ -121,7 +121,7 @@ namespace Timesheet
                 }));
             }
 
-            if (hrsElapsed > Configuracao.TempoInativo * 0.1)
+            if (hrsElapsed > Configuracao.TempoInativo * 60)
             {
                 a.Elapsed -= Cronometro;
                 var data = DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString();
