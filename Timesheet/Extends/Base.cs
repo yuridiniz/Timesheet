@@ -30,7 +30,7 @@ namespace Controller.Extends
             {
                 wr.Write(registro.Saida + " ; ");
                 wr.Write(registro.Conferir + " ; ");
-                wr.Write(registro.Atividade + "");
+                wr.Write(string.IsNullOrEmpty(registro.Atividade) ? " " : registro.Atividade + "");
 
                 wr.Close();
             }

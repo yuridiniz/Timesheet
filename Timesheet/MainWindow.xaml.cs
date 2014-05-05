@@ -200,11 +200,11 @@ namespace Timesheet
                 {
                     var registro = new Registro();
 
-                    registro.Dia = DateTime.Parse(UltimoDiaRegistrado.ToString() + '/' + DateTime.Now.Month.ToString()).ToString("dd|MM|yyyy", CultureInfo.InvariantCulture) + ";";
+                    registro.Dia = DateTime.Parse(UltimoDiaRegistrado.ToString() + '/' + DateTime.Now.Month.ToString()).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + ";";
                     registro.Entrada = ";";
                     registro.Conferir = ";";
                     registro.Saida = ";";
-                    registro.Atividade = "";
+                    registro.Atividade = " ";
 
 
                     registro.RegistrarEntrada();
