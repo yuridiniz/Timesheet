@@ -23,6 +23,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Data;
 using Timesheet.Base;
+using Forms = System.Windows.Forms;
+using System.Drawing;
 
 namespace Timesheet
 {
@@ -31,10 +33,18 @@ namespace Timesheet
     /// </summary>
     public partial class MainWindow : Window
     {
-
+        bool entrada = false;
+        System.Timers.Timer a;
+        public Forms.NotifyIcon notifyIcon1;
         public MainWindow()
         {
             InitializeComponent();
+
+            notifyIcon1 = new Forms.NotifyIcon();
+            notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
+            notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
+            notifyIcon1.Visible = false;
+            notifyIcon1.Text = "Timesheet";
 
             RegistrarStartup();
             IniciarArquivos();
@@ -44,11 +54,187 @@ namespace Timesheet
 
             ExibirValores();
 
+            //Contador
+            a = new System.Timers.Timer();
+            a.Interval = 1000;
+            a.Elapsed += Cronometro;
+            a.Start();
+
+            //Salva o momento que o usuário travou o windows
+            SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+            //Salva o momento do shutdown
+            SystemEvents.SessionEnding += SystemEvents_SessionEnding;
             btnEntrada.Click += btnEntrada_Click;
             btnSair.Click += btnSair_Click;
             btnExportar.Click += btnExportar_Click;
             btnConfig.Click += btnConfig_Click;
+            btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
+            StateChanged += MainWindow_StateChanged;
 
+        }
+
+        private void notifyIcon1_DoubleClick(object sender, EventArgs e)
+        {
+            this.Show();
+            notifyIcon1.Visible = false;
+            this.ShowInTaskbar = true;
+            WindowState = WindowState.Normal;
+
+        }
+
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                notifyIcon1.Visible = true;
+                this.ShowInTaskbar = false;
+                this.Hide();
+
+                notifyIcon1.BalloonTipTitle = "Timesheet";
+                notifyIcon1.BalloonTipText = "Working in background";
+                notifyIcon1.ShowBalloonTip(1000);
+            }
+        }
+
+        /// <summary>
+        /// Evento disparado a cada segundo
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Cronometro(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            var hrsElapsed = Inactivity.GetLastInputTime();
+            var ultimoRegistro = UltimoRegistro().Split(';');
+            bool VerificaEntradaRegistrada = ultimoRegistro.Length <= 4;
+
+            if (VerificaEntradaRegistrada)
+            {
+                var entrada = DateTime.Parse(ultimoRegistro[0].Trim() + "/" + DateTime.Now.Year + " " + ultimoRegistro[1] + ":00");
+                var diferenca = DateTime.Now - entrada; 
+                var p = entrada.AddSeconds(diferenca.TotalSeconds);
+
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    int hr = Convert.ToInt32(this.lblHrs.Content);
+                    this.lblHrs.Content = (int)(Pagamento.Horas + diferenca.TotalSeconds / (60 * 60));       // important
+                    this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));       // important
+                }));
+            }
+
+            if (hrsElapsed > Configuracao.TempoInativo * 60)
+            {
+                a.Elapsed -= Cronometro;
+                var data = DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString();
+                Dispatcher.Invoke(new Action(() =>
+                    {
+                        this.Hide();
+                        this.Activate();
+                        this.Topmost = true;  // important
+                        this.Topmost = false; // important
+                        this.Focus();         // important
+
+                    }));
+
+                var resultado = MessageBox.Show("O Sistema ficou inativo desde " + data + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    this.Show();
+
+                }));
+
+                if (resultado == MessageBoxResult.Yes)
+                {
+                    var registro = new Registro();
+                    //Adiciona 3 minutus para bater com o timesheet de papel
+
+                    registro.Saida = DateTime.Parse(data).AddMinutes(3).ToShortTimeString();
+                    registro.Atividade = " ";
+                    registro.Conferir = "OK";
+
+                    registro.RegistrarSaida(this);
+
+
+                    Thread.Sleep(4000);
+
+                    registro = new Registro();
+                    //Remove 4 minutos para bater com o timesheet do papel
+
+                    registro.Dia = DateTime.Now.ToString("dd/MM");
+                    registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                    registro.Conferir = "OK";
+
+                    registro.RegistrarEntrada(this);
+
+                }
+
+                a.Elapsed += Cronometro;
+            }
+        }
+
+        /// <summary>
+        /// Captura o travamento da sessão do windows
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            if (!entrada)
+            {
+                string[] linhas = new string[] { DateTime.Now.ToString()};
+                System.IO.File.WriteAllLines(Configuracao.Logs + "SwUser.log", linhas);
+                entrada = true;
+                a.Elapsed -= Cronometro;
+            }
+            else
+            {
+                a.Elapsed += Cronometro;
+                if (System.IO.File.Exists(Configuracao.Logs + "SwUser.log"))
+                {
+                    var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "SwUser.log");
+                    this.Focus();
+                    var resultado = MessageBox.Show("Foi registrado um logout as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (resultado == MessageBoxResult.Yes)
+                    {
+                        var registro = new Registro();
+                        //Adiciona 3 minutus para bater com o timesheet de papel
+
+                        registro.Saida = DateTime.Parse(linha[0]).AddMinutes(3).ToShortTimeString();
+                        registro.Atividade = " ";
+                        registro.Conferir = "OK";
+
+                        registro.RegistrarSaida(this);
+
+                        Thread.Sleep(3000);
+
+                        registro = new Registro();
+                        //Remove 4 minutos para bater com o timesheet do papel
+
+                        registro.Dia = DateTime.Now.ToString("dd/MM");
+                        registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                        registro.Conferir = "OK";
+
+                        registro.RegistrarEntrada(this);
+
+                    }
+
+                    System.IO.File.Delete(Configuracao.Logs + "SwUser.log");
+                }
+
+                entrada = false;
+            }
+        }
+
+        /// <summary>
+        /// Método que grava o momento do shutdown do windows
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
+        {
+            string[] linhas = new string[] { DateTime.Now.ToString() };
+            System.IO.File.WriteAllLines(Configuracao.Logs + "ShutUser.log", linhas);
+            entrada = true;
         }
 
         /// <summary>
@@ -73,6 +259,95 @@ namespace Timesheet
         /// </summary>
         private void IniciarArquivos()
         {
+            if (System.IO.File.Exists(Configuracao.Logs + "ShutUser.log"))
+            {
+
+                var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "ShutUser.log");
+                var resultado = MessageBox.Show("O sistema foi desligado as " + linha[0] + " deseja registrar como uma saída?", "shutdown detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                if (resultado == MessageBoxResult.Yes)
+                {
+                    var registro = new Registro();
+                    //Adiciona 3 minutus para bater com o timesheet de papel
+
+                    registro.Saida = DateTime.Parse(linha[0]).AddMinutes(3).ToShortTimeString();
+                    registro.Atividade = " ";
+                    registro.Conferir = "OK";
+
+                    registro.RegistrarSaida(this);
+
+                    registro = new Registro();
+                    //Remove 4 minutos para bater com o timesheet do papel
+
+                    registro.Dia = DateTime.Now.ToString("dd/MM");
+                    registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                    registro.Conferir = "OK";
+
+                    registro.RegistrarEntrada(this);
+                }
+
+                System.IO.File.Delete(Configuracao.Logs + "ShutUser.log");
+            }
+            else if (System.IO.File.Exists(Configuracao.Logs + "SwUser.log"))
+            {
+                var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "SwUser.log");
+                this.Focus();
+                var resultado = MessageBox.Show("Foi registrado um logout as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                
+                if (resultado == MessageBoxResult.Yes)
+                {
+                    var registro = new Registro();
+                    //Adiciona 3 minutus para bater com o timesheet de papel
+
+                    registro.Saida = DateTime.Parse(linha[0]).AddMinutes(3).ToShortTimeString();
+                    registro.Atividade = " ";
+                    registro.Conferir = "OK";
+
+                    registro.RegistrarSaida(this);
+
+                    registro = new Registro();
+                    //Remove 4 minutos para bater com o timesheet do papel
+
+                    registro.Dia = DateTime.Now.ToString("dd/MM");
+                    registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                    registro.Conferir = "OK";
+
+                    registro.RegistrarEntrada(this);
+
+                }
+
+                System.IO.File.Delete(Configuracao.Logs + "SwUser.log");
+            }
+            else
+            {
+                var ultimaLinha = UltimoRegistro();
+                if (ultimaLinha.Contains("Dia;Entrada;Status;Saida;Status"))
+                {
+
+                    var resultado = MessageBox.Show("Registrar entrada?", "Iniciando mês", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                    if (resultado == MessageBoxResult.Yes)
+                    {
+                        var registro = new Registro();
+                        //Remove 4 minutos para bater com o timesheet do papel
+
+                        registro.Dia = DateTime.Now.ToString("dd/MM");
+                        registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                        registro.Conferir = "OK";
+
+                        registro.RegistrarEntrada(this);
+
+                    }
+                }
+
+            }
+
+            if (!Directory.Exists(Configuracao.Logs))
+                Directory.CreateDirectory(Configuracao.Logs);
+
+            if (!Directory.Exists(Configuracao.Atividades))
+                File.Create(Configuracao.Atividades);
+
             if (File.Exists(Configuracao.Path))
             {
                 try
@@ -123,6 +398,11 @@ namespace Timesheet
                     wr.WriteLine("");
                     wr.WriteLine("EXIBIR_PRETENCAO = true");
                     wr.WriteLine("EXIBIR_VALOR_ATUAL = true");
+                    wr.WriteLine("");
+                    wr.WriteLine("# Dados de registro");
+                    wr.WriteLine("");
+                    wr.WriteLine("# tempo em minutos para que seja registrado uma saída quando o sistema estiver inativo");
+                    wr.WriteLine("TEMPO_INATIVO = 20");
 
                     wr.Close();
 
@@ -207,8 +487,8 @@ namespace Timesheet
                     registro.Atividade = " ";
 
 
-                    registro.RegistrarEntrada();
-                    registro.RegistrarSaida();
+                    registro.RegistrarEntrada(this);
+                    registro.RegistrarSaida(this);
 
                     UltimoDiaRegistrado++;
                 }
@@ -247,7 +527,7 @@ namespace Timesheet
                 registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
                 registro.Conferir = (ckbConferir.IsChecked == true ? "Conferir" : "OK");
 
-                registro.RegistrarEntrada();
+                registro.RegistrarEntrada(this);
 
                 btnEntrada.IsEnabled = false;
                 btnSair.IsEnabled = true;
@@ -318,7 +598,8 @@ namespace Timesheet
                         var dados = linha.Split(';');
                         if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
                         {
-                            linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet, linhaEditavel - 1);
+                            Thread.Sleep(2500);
+                            linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet);
                             if (linhaEditavel == linhaEditavelAnterior)
                                 linhaEditavel++;
                             else if (linhaEditavel < linhaEditavelAnterior)
@@ -391,10 +672,10 @@ namespace Timesheet
         /// <param name="excelWorksheet"></param>
         /// <param name="startIndex"></param>
         /// <returns></returns>
-        public int ObterLinhaDaData(DateTime data, Excel.Worksheet excelWorksheet, int startIndex)
+        public int ObterLinhaDaData(DateTime data, Excel.Worksheet excelWorksheet)
         {
             var dataLinha = new DateTime();
-            startIndex = 0;
+            int startIndex = 0;
             while(data.ToShortDateString() != dataLinha.ToShortDateString())
             {
                 startIndex++;

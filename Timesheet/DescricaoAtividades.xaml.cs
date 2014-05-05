@@ -49,7 +49,7 @@ namespace Timesheet
                 registro.Atividade = txtAtividade.Text;
                 registro.Conferir = (MainContext.ckbConferir.IsChecked == true ? "Conferir" : "OK");
 
-                registro.RegistrarSaida();
+                registro.RegistrarSaida(MainContext);
 
                 MainContext.btnEntrada.IsEnabled = true;
                 MainContext.btnSair.IsEnabled = false;

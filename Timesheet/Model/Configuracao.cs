@@ -16,7 +16,11 @@ namespace Timesheet.Model
         public static bool ExibirPretencao { get; set; }
         public static bool ExibirValor { get; set; }
 
+        public static int TempoInativo { get; set; }
+
         public static string Diretorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/";
+        public static string Logs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/";
+        public static string Atividades = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Atividades.txt";
         public static string PathConfig = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Config";
         public static string Config = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Config/Config.ini";
         public static string Path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Relatorio.txt";
@@ -42,6 +46,7 @@ namespace Timesheet.Model
                             case "QTD_FERIADOS": QtdFeriados = Convert.ToInt32(valor); break;
                             case "EXIBIR_PRETENCAO": ExibirPretencao = Convert.ToBoolean(valor); break;
                             case "EXIBIR_VALOR_ATUAL": ExibirValor = Convert.ToBoolean(valor); break;
+                            case "TEMPO_INATIVO": TempoInativo = Convert.ToInt32(valor); break;
                             default: break;
                         }
 
