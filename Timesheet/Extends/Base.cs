@@ -25,7 +25,7 @@ namespace Controller.Extends
 
             contexto.notifyIcon1.BalloonTipTitle = "Timesheet";
             contexto.notifyIcon1.BalloonTipText = "Entrada Registrada: " + registro.Entrada;
-            contexto.notifyIcon1.ShowBalloonTip(5000);
+            contexto.notifyIcon1.ShowBalloonTip(1000);
         }
 
         public static void RegistrarSaida(this Registro registro, MainWindow contexto)
@@ -42,7 +42,7 @@ namespace Controller.Extends
 
             contexto.notifyIcon1.BalloonTipTitle = "Timesheet";
             contexto.notifyIcon1.BalloonTipText = "Saída Registrada: " + registro.Saida;
-            contexto.notifyIcon1.ShowBalloonTip(5000);
+            contexto.notifyIcon1.ShowBalloonTip(1000);
         }
     }
 }

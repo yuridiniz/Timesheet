@@ -313,8 +313,8 @@ namespace Timesheet
                 var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
 
                 var resultado = MessageBox.Show("O sistema foi desligado as " + linha[0] + " deseja registrar como uma saída?", "shutdown detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                this.Hide();
+                
+                this.Show();
 
                 if (resultado == MessageBoxResult.Yes)
                 {
@@ -351,7 +351,7 @@ namespace Timesheet
                 var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
                 var resultado = MessageBox.Show("Foi registrado um logout as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
-                this.Hide();
+                this.Show();
 
                 if (resultado == MessageBoxResult.Yes)
                 {
@@ -391,7 +391,7 @@ namespace Timesheet
                     var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
                     var resultado = MessageBox.Show("Registrar entrada?", "Iniciando mês", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
-                    this.Hide();
+                    this.Show();
 
                     if (resultado == MessageBoxResult.Yes)
                     {
