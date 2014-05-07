@@ -412,7 +412,7 @@ namespace Timesheet
             if (!Directory.Exists(Configuracao.Logs))
                 Directory.CreateDirectory(Configuracao.Logs);
 
-            if (!Directory.Exists(Configuracao.Atividades))
+            if (!File.Exists(Configuracao.Atividades))
                 File.Create(Configuracao.Atividades);
 
             if (File.Exists(Configuracao.Path))
