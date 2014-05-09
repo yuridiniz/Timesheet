@@ -22,9 +22,9 @@ using System.Threading;
 using System.Diagnostics;
 using System.Globalization;
 using System.Data;
-using Timesheet.Base;
 using Forms = System.Windows.Forms;
 using System.Drawing;
+using Timesheet.ModelContext;
 
 namespace Timesheet
 {
@@ -43,9 +43,8 @@ namespace Timesheet
             InitializeComponent();
 
             notifyIcon1 = new Forms.NotifyIcon();
-            notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
             notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
-            notifyIcon1.Visible = false;
+            notifyIcon1.Visible = true;
             notifyIcon1.Text = "Timesheet";
 
             RegistrarStartup();
@@ -62,33 +61,45 @@ namespace Timesheet
             a.Elapsed += Cronometro;
             a.Start();
 
-            //Salva o momento que o usuário travou o windows
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
-            //Salva o momento do shutdown
             SystemEvents.SessionEnding += SystemEvents_SessionEnding;
             btnEntrada.Click += btnEntrada_Click;
             btnSair.Click += btnSair_Click;
             btnExportar.Click += btnExportar_Click;
+            notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
             btnConfig.Click += btnConfig_Click;
-            btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
-            StateChanged += MainWindow_StateChanged;
+            this.StateChanged += MainWindow_StateChanged;
 
+            btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
+            btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
+            bar.MouseDown += (e, s) => { this.DragMove(); };
+
+        }
+
+        #region Eventos
+
+        /// <summary>
+        /// Evento de click para o botão sair
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="e"></param>
+        private void btnSair_Click(object s, EventArgs e)
+        {
+            var desc = new DescricaoAtividades(this);
+            desc.Show();
         }
 
         private void notifyIcon1_DoubleClick(object sender, EventArgs e)
         {
             this.Show();
-            notifyIcon1.Visible = false;
             this.ShowInTaskbar = true;
             WindowState = WindowState.Normal;
-
         }
 
         private void MainWindow_StateChanged(object sender, EventArgs e)
         {
             if (WindowState == WindowState.Minimized)
             {
-                notifyIcon1.Visible = true;
                 this.ShowInTaskbar = false;
                 this.Hide();
 
@@ -106,6 +117,19 @@ namespace Timesheet
         private void Cronometro(object sender, System.Timers.ElapsedEventArgs e)
         {
             var hrsElapsed = Inactivity.GetLastInputTime();
+
+            DbContext db = new DbContext();
+            var lastRegistro = db.Registros.LastOrDefault();
+
+            if (lastRegistro != null)
+            {
+                if (lastRegistro.StatusUsuario != Registro.Usuario.Off)
+                {
+                    var entrada = DateTime.Parse(lastRegistro.Dia + "/" + DateTime.Now.Year + " " + lastRegistro.Entrada + ":00");
+                }
+            }
+
+
             var ultimoRegistro = UltimoRegistro().Split(';');
             bool VerificaEntradaRegistrada = ultimoRegistro.Length <= 4;
 
@@ -119,8 +143,7 @@ namespace Timesheet
 
                     Dispatcher.Invoke(new Action(() =>
                     {
-                        int hr = Convert.ToInt32(this.lblHrs.Content);
-                        this.lblHrs.Content = (int)(Pagamento.Horas + diferenca.TotalSeconds / (60 * 60));
+                        this.lblHrs.Content = string.Format("{0:0.00}", (Pagamento.Horas + diferenca.TotalSeconds / (60 * 60)));
                         this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));
                     }));
                 }
@@ -280,6 +303,200 @@ namespace Timesheet
         }
 
         /// <summary>
+        /// Evento de click para o botão Entrar
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="e"></param>
+        private void btnEntrada_Click(object s, EventArgs e)
+        {
+            try
+            {
+                var registro = new Registro();
+                //Remove 4 minutos para bater com o timesheet do papel
+
+                registro.Dia = DateTime.Now.ToString("dd/MM");
+                registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                registro.Conferir = (ckbConferir.IsChecked == true ? "Conferir" : "OK");
+
+                registro.RegistrarEntrada(this);
+
+                btnEntrada.IsEnabled = false;
+                btnSair.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+        }
+
+        /// <summary>
+        /// Evento de click para o botão exportar
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="e"></param>
+        private void btnExportar_Click(object s, EventArgs e)
+        {
+            //DataTable dt = new DataTable(Configuracao.Path);
+
+            //var exApp = new Excel.Application();
+            //exApp.Visible = true;
+
+            //Excel.Workbook wb = exApp.Workbooks.Add(Excel.XlWBATemplate.xlWBATWorksheet);
+            //Excel.Worksheet ws = (Excel.Worksheet)wb.Worksheets[1];
+
+            Task.Run(() => ExportarExcel());
+        }
+
+        /// <summary>
+        /// Abre a pasta de configuração
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="e"></param>
+        private void btnConfig_Click(object s, EventArgs e)
+        {
+            System.Diagnostics.Process.Start(Configuracao.Diretorio);
+        }
+
+        #endregion
+
+        #region Excel
+
+        /// <summary>
+        /// Exporta o excel
+        /// </summary>
+        private void ExportarExcel()
+        {
+            try
+            {
+                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
+                    Process.GetProcessesByName("EXCEL")[i].Kill();
+
+                //var desc = new EXCEL.Workbook();
+                OpenFileDialog dialogo = new OpenFileDialog();
+                dialogo.ShowDialog();
+
+                var timesheetExcel = dialogo.FileName;
+
+                if (string.IsNullOrEmpty(timesheetExcel))
+                    return;
+
+                var exApp = new Excel.Application();
+                var work = exApp.Workbooks.Open(timesheetExcel, 0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "", true, false, 0, true, false, false);
+                exApp.Visible = true;
+
+                Excel.Worksheet excelWorksheet = null;
+                foreach (Excel.Worksheet worksheet in work.Worksheets)
+                    excelWorksheet = worksheet;
+
+                if (excelWorksheet == null)
+                    return;
+
+                using (StreamReader sr = new StreamReader(Configuracao.Relatorio))
+                {
+                    var linha = sr.ReadLine();
+                    linha = sr.ReadLine();
+                    int linhaEditavel = 1;
+                    int linhaEditavelAnterior = linhaEditavel;
+                    while (linha != null)
+                    {
+                        var dados = linha.Split(';');
+                        if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
+                        {
+                            Thread.Sleep(2500);
+                            linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet);
+                            if (linhaEditavel == linhaEditavelAnterior)
+                                linhaEditavel++;
+                            else if (linhaEditavel < linhaEditavelAnterior)
+                            {
+                                var diferenca = linhaEditavelAnterior - linhaEditavel;
+                                linhaEditavel += (diferenca + 1);
+                            }
+
+                            if (linhaEditavel != -1)
+                            {
+                                var entrada = Convert.ToDateTime(dados[1]);
+                                var saida = Convert.ToDateTime(dados[3]);
+                                var desc = dados[5];
+
+                                var totalHrs = (saida - entrada).TotalHours;
+
+                                Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaEditavel, "D" + linhaEditavel);
+                                Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaEditavel, "E" + linhaEditavel);
+                                Excel.Range cellDesc = cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaEditavel, "H" + linhaEditavel);
+
+                                cellEntrada.Value = entrada.ToShortTimeString();
+                                cellSaida.Value = saida.ToShortTimeString();
+                                cellDesc.Value = desc;
+
+                                //cellEntrada.Value = "";
+                                //cellSaida.Value = "";
+                                //cellDesc.Value = "";
+
+                                linhaEditavelAnterior = linhaEditavel;
+                            }
+
+                        }
+
+                        linha = sr.ReadLine();
+                    }
+
+                    work.Save();
+                    work.Close();
+                    sr.Close();
+                }
+
+                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
+                {
+                    Process.GetProcessesByName("EXCEL")[i].Kill();
+                }
+
+                Process.Start(timesheetExcel);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocorreu um erro durante o processo de exportação!");
+
+            }
+        }
+
+        /// <summary>
+        /// Obtem a linha da data para edição
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="excelWorksheet"></param>
+        /// <param name="startIndex"></param>
+        /// <returns></returns>
+        public int ObterLinhaDaData(DateTime data, Excel.Worksheet excelWorksheet)
+        {
+            var dataLinha = new DateTime();
+            int startIndex = 0;
+            while (data.ToShortDateString() != dataLinha.ToShortDateString())
+            {
+                startIndex++;
+
+                Excel.Range cellRotulo = (Excel.Range)excelWorksheet.get_Range("A" + startIndex, "A" + startIndex);
+
+                if (cellRotulo.Value != null)
+                {
+                    var valor = Convert.ToString(cellRotulo.Value);
+                    var dataLinha2 = Convert.ToDateTime(dataLinha.ToShortDateString());
+                    var parse = DateTime.TryParse(valor, out dataLinha2);
+                    if (parse == true)
+                        dataLinha = dataLinha2;
+                }
+
+                if (startIndex == 100)
+                    return -1;
+
+            }
+
+            return startIndex;
+        }
+
+        #endregion
+
+        /// <summary>
         /// Registra a aplicação para iniciar junto com o windows
         /// </summary>
         private void RegistrarStartup()
@@ -415,7 +632,7 @@ namespace Timesheet
             if (!File.Exists(Configuracao.Atividades))
                 File.Create(Configuracao.Atividades);
 
-            if (File.Exists(Configuracao.Path))
+            if (File.Exists(Configuracao.Relatorio))
             {
                 try
                 {
@@ -437,7 +654,7 @@ namespace Timesheet
                 if (!Directory.Exists(Configuracao.Diretorio))
                     Directory.CreateDirectory(Configuracao.Diretorio);
 
-                using (StreamWriter wr = new StreamWriter(Configuracao.Path, true))
+                using (StreamWriter wr = new StreamWriter(Configuracao.Relatorio, true))
                 {
                     wr.Write("Dia;");
                     wr.Write("Entrada;");
@@ -493,9 +710,9 @@ namespace Timesheet
                 lblValorTitulo.Visibility = Visibility.Hidden;
             }
 
-            lblValor.Content = "R$ " + Pagamento.Salario();
-            lblHrs.Content = Pagamento.Horas.ToString();
-            lblValorEsp.Content = "R$ " + Pagamento.SalarioEsperado();
+            lblValor.Content = string.Format("{0:C}",Pagamento.Salario());
+            lblHrs.Content = string.Format("{0:0.00}",Pagamento.Horas);
+            lblValorEsp.Content = string.Format("{0:C}", Pagamento.SalarioEsperado());
             lblMedia.Content = Pagamento.Media();
             lblHrsPretendidas.Content = Configuracao.HrsEsperadas.ToString();
             lblDiasUtes.Content = Pagamento.QuantidadeDiasUteis();
@@ -508,7 +725,7 @@ namespace Timesheet
         private string UltimoRegistro()
         {
             var linha = string.Empty;
-            using (StreamReader sr = new StreamReader(Configuracao.Path))
+            using (StreamReader sr = new StreamReader(Configuracao.Relatorio))
             {
                 linha = sr.ReadLine();
                 var linhaAux = string.Empty;
@@ -578,205 +795,10 @@ namespace Timesheet
             }
         }
 
-        /// <summary>
-        /// Evento de click para o botão Entrar
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
-        private void btnEntrada_Click(object s, EventArgs e)
-        {
-            try
-            {
-                var registro = new Registro();
-                //Remove 4 minutos para bater com o timesheet do papel
-
-                registro.Dia = DateTime.Now.ToString("dd/MM");
-                registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
-                registro.Conferir = (ckbConferir.IsChecked == true ? "Conferir" : "OK");
-
-                registro.RegistrarEntrada(this);
-
-                btnEntrada.IsEnabled = false;
-                btnSair.IsEnabled = true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-
-        }
-
-        /// <summary>
-        /// Evento de click para o botão exportar
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
-        private void btnExportar_Click(object s, EventArgs e)
-        {
-            //DataTable dt = new DataTable(Configuracao.Path);
-
-            //var exApp = new Excel.Application();
-            //exApp.Visible = true;
-
-            //Excel.Workbook wb = exApp.Workbooks.Add(Excel.XlWBATemplate.xlWBATWorksheet);
-            //Excel.Worksheet ws = (Excel.Worksheet)wb.Worksheets[1];
-
-            Task.Run(() => ExportarExcel());
-        }
-
-        /// <summary>
-        /// Exporta o excel
-        /// </summary>
-        private void ExportarExcel()
-        {
-            try
-            {
-                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
-                    Process.GetProcessesByName("EXCEL")[i].Kill();
-
-                //var desc = new EXCEL.Workbook();
-                OpenFileDialog dialogo = new OpenFileDialog();
-                dialogo.ShowDialog();
-
-                var timesheetExcel = dialogo.FileName;
-
-                if (string.IsNullOrEmpty(timesheetExcel))
-                    return;
-
-                var exApp = new Excel.Application();
-                var work = exApp.Workbooks.Open(timesheetExcel, 0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "", true, false, 0, true, false, false);
-                exApp.Visible = true;
-
-                Excel.Worksheet excelWorksheet = null;
-                foreach (Excel.Worksheet worksheet in work.Worksheets)
-                    excelWorksheet = worksheet;
-
-                if (excelWorksheet == null)
-                    return;
-
-                using (StreamReader sr = new StreamReader(Configuracao.Path))
-                {
-                    var linha = sr.ReadLine();
-                    linha = sr.ReadLine();
-                    int linhaEditavel = 1;
-                    int linhaEditavelAnterior = linhaEditavel;
-                    while (linha != null)
-                    {
-                        var dados = linha.Split(';');
-                        if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
-                        {
-                            Thread.Sleep(2500);
-                            linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet);
-                            if (linhaEditavel == linhaEditavelAnterior)
-                                linhaEditavel++;
-                            else if (linhaEditavel < linhaEditavelAnterior)
-                            {
-                                var diferenca = linhaEditavelAnterior - linhaEditavel;
-                                linhaEditavel += (diferenca + 1);
-                            }
-
-                            if (linhaEditavel != -1)
-                            {
-                                var entrada = Convert.ToDateTime(dados[1]);
-                                var saida = Convert.ToDateTime(dados[3]);
-                                var desc = dados[5];
-
-                                var totalHrs = (saida - entrada).TotalHours;
-
-                                Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaEditavel, "D" + linhaEditavel);
-                                Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaEditavel, "E" + linhaEditavel);
-                                Excel.Range cellDesc = cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaEditavel, "H" + linhaEditavel);
-
-                                cellEntrada.Value = entrada.ToShortTimeString();
-                                cellSaida.Value = saida.ToShortTimeString();
-                                cellDesc.Value = desc;
-
-                                //cellEntrada.Value = "";
-                                //cellSaida.Value = "";
-                                //cellDesc.Value = "";
-
-                                linhaEditavelAnterior = linhaEditavel;
-                            }
-
-                        }
-
-                        linha = sr.ReadLine();
-                    }
-
-                    work.Save();
-                    work.Close();
-                    sr.Close();
-                }
-
-                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
-                {
-                    Process.GetProcessesByName("EXCEL")[i].Kill();
-                }
-
-                Process.Start(timesheetExcel);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ocorreu um erro durante o processo de exportação!");
-
-            }
-        }
-
-        /// <summary>
-        /// Abre a pasta de configuração
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
-        private void btnConfig_Click(object s, EventArgs e)
-        {
-            System.Diagnostics.Process.Start(Configuracao.Diretorio);
-        }
-
-        /// <summary>
-        /// Obtem a linha da data para edição
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="excelWorksheet"></param>
-        /// <param name="startIndex"></param>
-        /// <returns></returns>
-        public int ObterLinhaDaData(DateTime data, Excel.Worksheet excelWorksheet)
-        {
-            var dataLinha = new DateTime();
-            int startIndex = 0;
-            while(data.ToShortDateString() != dataLinha.ToShortDateString())
-            {
-                startIndex++;
-
-                Excel.Range cellRotulo = (Excel.Range)excelWorksheet.get_Range("A" + startIndex, "A" + startIndex);
-
-                if (cellRotulo.Value != null)
-                {
-                    var valor = Convert.ToString(cellRotulo.Value);
-                    var dataLinha2 = Convert.ToDateTime(dataLinha.ToShortDateString());
-                    var parse = DateTime.TryParse(valor, out dataLinha2);
-                    if (parse == true)
-                        dataLinha = dataLinha2;
-                }
-
-                if (startIndex == 100)
-                    return -1;
-
-            }
-
-            return startIndex;
-        }
-
-        /// <summary>
-        /// Evento de click para o botão sair
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
-        private void btnSair_Click(object s, EventArgs e)
-        {
-            var desc = new DescricaoAtividades(this);
-            desc.Show();
-        }
-
         
+
+
+
+
     }
 }

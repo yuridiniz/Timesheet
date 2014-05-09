@@ -23,7 +23,7 @@ namespace Timesheet.Model
         public static string Atividades = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Atividades.txt";
         public static string PathConfig = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Config";
         public static string Config = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Config/Config.ini";
-        public static string Path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Relatorio.txt";
+        public static string Relatorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Relatorio.txt";
 
         public static void CarregarConfiguracoes()
         {
