@@ -117,24 +117,12 @@ namespace Timesheet
         private void Cronometro(object sender, System.Timers.ElapsedEventArgs e)
         {
             var hrsElapsed = Inactivity.GetLastInputTime();
-
-            DbContext db = new DbContext();
-            var lastRegistro = db.Registros.LastOrDefault();
-
-            if (lastRegistro != null)
-            {
-                if (lastRegistro.StatusUsuario != Registro.Usuario.Off)
-                {
-                    var entrada = DateTime.Parse(lastRegistro.Dia + "/" + DateTime.Now.Year + " " + lastRegistro.Entrada + ":00");
-                }
-            }
-
-
             var ultimoRegistro = UltimoRegistro().Split(';');
             bool VerificaEntradaRegistrada = ultimoRegistro.Length <= 4;
-
             if (!Notificando)
             {
+                string data = DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString();
+
                 if (VerificaEntradaRegistrada)
                 {
                     var entrada = DateTime.Parse(ultimoRegistro[0].Trim() + "/" + DateTime.Now.Year + " " + ultimoRegistro[1] + ":00");
@@ -143,16 +131,16 @@ namespace Timesheet
 
                     Dispatcher.Invoke(new Action(() =>
                     {
-                        this.lblHrs.Content = string.Format("{0:0.00}", (Pagamento.Horas + diferenca.TotalSeconds / (60 * 60)));
+                        int hr = Convert.ToInt32(this.lblHrs.Content);
+                        this.lblHrs.Content = (int)(Pagamento.Horas + diferenca.TotalSeconds / (60 * 60));
                         this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));
                     }));
-                }
 
-                if (hrsElapsed > Configuracao.TempoInativo * 60)
-                {
-                    Notificando = true;
-                    var data = DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString();
-                    Dispatcher.Invoke(new Action(() =>
+
+                    if (hrsElapsed > Configuracao.TempoInativo * 60)
+                    {
+                        Notificando = true;
+                        Dispatcher.Invoke(new Action(() =>
                         {
                             this.Hide();
                             this.Activate();
@@ -162,71 +150,103 @@ namespace Timesheet
 
                         }));
 
-                    var resultado = MessageBox.Show("O Sistema ficou inativo desde " + data + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        var resultado = MessageBox.Show("O Sistema ficou inativo desde " + data + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
-                    Dispatcher.Invoke(new Action(() =>
+                        Dispatcher.Invoke(new Action(() =>
+                        {
+                            this.Show();
+
+                        }));
+
+                        if (resultado == MessageBoxResult.Yes)
+                        {
+                            var registro = new Registro();
+                            //Adiciona 3 minutus para bater com o timesheet de papel
+
+                            registro.Saida = DateTime.Parse(data).AddMinutes(3).ToShortTimeString();
+                            registro.Atividade = " ";
+                            registro.Conferir = "OK";
+
+                            registro.RegistrarSaida(this);
+
+
+                            Thread.Sleep(4000);
+
+                            registro = new Registro();
+                            //Remove 4 minutos para bater com o timesheet do papel
+
+                            registro.Dia = DateTime.Now.ToString("dd/MM");
+                            registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                            registro.Conferir = "OK";
+
+                            registro.RegistrarEntrada(this);
+
+                        }
+                        else
+                        {
+                            if (DateTime.Now >= DateTime.Parse(DateTime.Parse(data).ToShortDateString() + " 23:59:59"))
+                            {
+                                a.Elapsed -= Cronometro;
+
+                                var registro = new Registro();
+                                //Adiciona 3 minutus para bater com o timesheet de papel
+
+                                registro.Saida = DateTime.Now.ToShortTimeString();
+                                registro.Conferir = "OK";
+                                registro.Atividade = " ";
+
+                                registro.RegistrarSaida(this);
+
+                                Thread.Sleep(1200);
+
+                                registro = new Registro();
+                                //Remove 4 minutos para bater com o timesheet do papel
+
+                                registro.Dia = DateTime.Now.ToString("dd/MM");
+                                registro.Entrada = DateTime.Now.ToShortTimeString();
+                                registro.Conferir = "OK";
+
+                                registro.RegistrarEntrada(this);
+
+                                a.Elapsed += Cronometro;
+                            }
+
+                        }
+
+                        Notificando = false;
+                    }
+
+                    if (DateTime.Now >= DateTime.Parse("23:59:59"))
                     {
-                        this.Show();
+                        a.Elapsed -= Cronometro;
 
-                    }));
-
-                    if (resultado == MessageBoxResult.Yes)
-                    {
                         var registro = new Registro();
                         //Adiciona 3 minutus para bater com o timesheet de papel
 
-                        registro.Saida = DateTime.Parse(data).AddMinutes(3).ToShortTimeString();
-                        registro.Atividade = " ";
+                        registro.Saida = DateTime.Now.ToShortTimeString();
                         registro.Conferir = "OK";
+                        registro.Atividade = " ";
 
                         registro.RegistrarSaida(this);
 
-
-                        Thread.Sleep(4000);
+                        Thread.Sleep(1200);
 
                         registro = new Registro();
                         //Remove 4 minutos para bater com o timesheet do papel
 
                         registro.Dia = DateTime.Now.ToString("dd/MM");
-                        registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
+                        registro.Entrada = DateTime.Now.ToShortTimeString();
                         registro.Conferir = "OK";
 
                         registro.RegistrarEntrada(this);
 
-                    }
+                        a.Elapsed += Cronometro;
 
-                    Notificando = false;
+                    }
                 }
             }
-
-            if(DateTime.Now  >= DateTime.Parse("23:59:59")) 
-            {
-                a.Elapsed -= Cronometro;
-
-                var registro = new Registro();
-                //Adiciona 3 minutus para bater com o timesheet de papel
-
-                registro.Saida = DateTime.Now.ToShortTimeString();
-                registro.Conferir = "OK";
-                registro.Atividade = " ";
-
-                registro.RegistrarSaida(this);
-
-                Thread.Sleep(1200);
-
-                registro = new Registro();
-                //Remove 4 minutos para bater com o timesheet do papel
-
-                registro.Dia = DateTime.Now.ToString("dd/MM");
-                registro.Entrada = DateTime.Now.ToShortTimeString();
-                registro.Conferir = "OK";
-
-                registro.RegistrarEntrada(this);
-
-                a.Elapsed += Cronometro;
-
-            }
         }
+
 
         /// <summary>
         /// Captura o travamento da sessão do windows
