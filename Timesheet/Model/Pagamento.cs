@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Timesheet.Model;
+using Timesheet.ModelContext;
 
 namespace Timesheet.Model
 {
@@ -32,14 +33,14 @@ namespace Timesheet.Model
             return qtdDias - Configuracao.QtdFeriados;
         }
 
-        public static string Salario()
+        public static double Salario()
         {
-            return (Horas * Configuracao.ValorHr).ToString();
+            return Horas * Configuracao.ValorHr;
         }
 
-        public static string SalarioEsperado()
+        public static double SalarioEsperado()
         {
-            return (Configuracao.HrsEsperadas * Configuracao.ValorHr).ToString("#.##");
+            return Configuracao.HrsEsperadas * Configuracao.ValorHr;
         }
 
         public static string Media()
@@ -58,42 +59,50 @@ namespace Timesheet.Model
 
         public static void CarregarDadosTimesheet()
         {
-            using (StreamReader sr = new StreamReader(Configuracao.Path))
-            {
-                var listHoras = new List<double>();
-                var linha = sr.ReadLine();
-                var linhaAnterior = linha;
+            DbContext contexto = new DbContext();
+            var listaRegistros = contexto.Registros;
 
-                //Para sair do cabeçalho
-                linha = sr.ReadLine();
+            Horas = listaRegistros.Sum(p => p.TotalHoras);
+            DiasTrabalhados = listaRegistros.Where(p => p.StatusUsuario != Registro.Usuario.Feriado).GroupBy(p => p.Dia).Count();
 
-                if (linha != null)
-                    DiasTrabalhados = 1;
+            #region Refatoring
+            //using (StreamReader sr = new StreamReader(Configuracao.Path))
+            //{
+            //    var listHoras = new List<double>();
+            //    var linha = sr.ReadLine();
+            //    var linhaAnterior = linha;
 
-                while (linha != null)
-                {
-                    var dados = linha.Split(';');
+            //    //Para sair do cabeçalho
+            //    linha = sr.ReadLine();
 
-                    if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
-                    {
-                        var entrada = Convert.ToDateTime(dados[1]);
-                        var saida = Convert.ToDateTime(dados[3]);
+            //    if (linha != null)
+            //        DiasTrabalhados = 1;
 
-                        var totalHrs = (saida - entrada).TotalHours;
-                        listHoras.Add(totalHrs);
-                    }
+            //    while (linha != null)
+            //    {
+            //        var dados = linha.Split(';');
 
-                    linhaAnterior = linha;
-                    linha = sr.ReadLine();
+            //        if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
+            //        {
+            //            var entrada = Convert.ToDateTime(dados[1]);
+            //            var saida = Convert.ToDateTime(dados[3]);
 
-                    if (linha != null)
-                        if (linhaAnterior.Split(';')[0].Trim() != linha.Split(';')[0].Trim() && !string.IsNullOrWhiteSpace(dados[3]))
-                            DiasTrabalhados++;
-                }
+            //            var totalHrs = (saida - entrada).TotalHours;
+            //            listHoras.Add(totalHrs);
+            //        }
 
-                Horas = Convert.ToInt32(listHoras.Sum());
-                sr.Close();
-            }
+            //        linhaAnterior = linha;
+            //        linha = sr.ReadLine();
+
+            //        if (linha != null)
+            //            if (linhaAnterior.Split(';')[0].Trim() != linha.Split(';')[0].Trim() && !string.IsNullOrWhiteSpace(dados[3]))
+            //                DiasTrabalhados++;
+            //    }
+
+            //    Horas = Convert.ToInt32(listHoras.Sum());
+            //    sr.Close();
+            //}
+            #endregion
         }
     }
 }
