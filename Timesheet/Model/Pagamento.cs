@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Timesheet.Model;
 using Timesheet.ModelContext;
+using Timesheet.Repositorio;
 
 namespace Timesheet.Model
 {
@@ -59,8 +60,8 @@ namespace Timesheet.Model
 
         public static void CarregarDadosTimesheet()
         {
-            DbContext contexto = new DbContext();
-            var listaRegistros = contexto.Registros;
+            RegistroRepositorio db = new RegistroRepositorio();
+            var listaRegistros = db.ListarRegistros();
 
             Horas = listaRegistros.Sum(p => p.TotalHoras);
             DiasTrabalhados = listaRegistros.Where(p => p.StatusUsuario != Registro.Usuario.Feriado && p.Dia != DateTime.Now.ToShortDateString()).GroupBy(p => p.Dia).Count();
