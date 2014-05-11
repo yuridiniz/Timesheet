@@ -13,11 +13,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Timesheet.Model;
-using Controller.Extends;
 using System.IO;
 using Microsoft.Win32;
 using System.Reflection;
-using Excel = Microsoft.Office.Interop.Excel;
 using System.Threading;
 using System.Diagnostics;
 using System.Globalization;
@@ -25,6 +23,7 @@ using System.Data;
 using Forms = System.Windows.Forms;
 using System.Drawing;
 using Timesheet.ModelContext;
+using Timesheet.Repositorio;
 
 namespace Timesheet
 {
@@ -34,32 +33,31 @@ namespace Timesheet
     public partial class MainWindow : Window
     {
         bool entrada = false;
-        System.Timers.Timer a;
+        System.Timers.Timer temporizador;
         public Forms.NotifyIcon notifyIcon1;
         bool Notificando = false;
 
         public MainWindow()
         {
             InitializeComponent();
-
-            notifyIcon1 = new Forms.NotifyIcon();
-            notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
-            notifyIcon1.Visible = true;
-            notifyIcon1.Text = "Timesheet";
-
             RegistrarStartup();
             IniciarArquivos();
             
             Configuracao.CarregarConfiguracoes();
             Pagamento.CarregarDadosTimesheet();
 
+            VerificarSaida();
             ExibirValores();
 
-            //Contador
-            a = new System.Timers.Timer();
-            a.Interval = 1000;
-            a.Elapsed += Cronometro;
-            a.Start();
+            notifyIcon1 = new Forms.NotifyIcon();
+            notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
+            notifyIcon1.Visible = true;
+            notifyIcon1.Text = "Timesheet";
+
+            temporizador = new System.Timers.Timer();
+            temporizador.Interval = 1000;
+            temporizador.Elapsed += Cronometro;
+            temporizador.Start();
 
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
             SystemEvents.SessionEnding += SystemEvents_SessionEnding;
@@ -76,18 +74,7 @@ namespace Timesheet
 
         }
 
-        #region Eventos
-
-        /// <summary>
-        /// Evento de click para o botão sair
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
-        private void btnSair_Click(object s, EventArgs e)
-        {
-            var desc = new DescricaoAtividades(this);
-            desc.Show();
-        }
+        #region Eventos de Usuário
 
         private void notifyIcon1_DoubleClick(object sender, EventArgs e)
         {
@@ -109,270 +96,111 @@ namespace Timesheet
             }
         }
 
-        /// <summary>
-        /// Evento disparado a cada segundo
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void Cronometro(object sender, System.Timers.ElapsedEventArgs e)
         {
+            var db = new RegistroRepositorio();
             var hrsElapsed = Inactivity.GetLastInputTime();
-            var ultimoRegistro = UltimoRegistro().Split(';');
-            bool VerificaEntradaRegistrada = ultimoRegistro.Length <= 4;
-            if (!Notificando)
+            var ultimoRegistro = db.ObterUltimoRegistro();
+
+            if (!Notificando && ultimoRegistro != null && ultimoRegistro.StatusUsuario == Registro.Usuario.Working)
             {
-                string data = DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString();
+                var entrada = DateTime.Parse(ultimoRegistro.Dia + " " + ultimoRegistro.Entrada);
+                var diferenca = DateTime.Now - entrada;
 
-                if (VerificaEntradaRegistrada)
+                Dispatcher.Invoke(new Action(() =>
                 {
-                    var entrada = DateTime.Parse(ultimoRegistro[0].Trim() + "/" + DateTime.Now.Year + " " + ultimoRegistro[1] + ":00");
-                    var diferenca = DateTime.Now - entrada;
-                    var p = entrada.AddSeconds(diferenca.TotalSeconds);
+                    var totalHrs = Pagamento.Horas + diferenca.TotalSeconds / (60 * 60);
+                    var Horas = new DateTime().AddHours(totalHrs);
+                    this.lblHrs.Content = FormatarHora(totalHrs, Horas.Minute); ;
+                    this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));
+                }));
 
+                if (hrsElapsed > Configuracao.TempoInativo * 60)
+                {
+                    Notificando = true;
                     Dispatcher.Invoke(new Action(() =>
                     {
-                        int hr = Convert.ToInt32(this.lblHrs.Content);
-                        this.lblHrs.Content = (int)(Pagamento.Horas + diferenca.TotalSeconds / (60 * 60));
-                        this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));
+                        AlertaSaida("O Sistema ficou inativo desde {0} deseja registrar como uma saída?", "O Sistema ficou inativo", string.Empty, true, DateTime.Parse(DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString()));
                     }));
 
+                    Notificando = false;
+                }
 
-                    if (hrsElapsed > Configuracao.TempoInativo * 60)
-                    {
-                        Notificando = true;
-                        Dispatcher.Invoke(new Action(() =>
-                        {
-                            this.Hide();
-                            this.Activate();
-                            this.Topmost = true;  // important
-                            this.Topmost = false; // important
-                            this.Focus();         // important
+                if (DateTime.Now >= DateTime.Parse("23:59:59"))
+                {
+                    temporizador.Elapsed -= Cronometro;
 
-                        }));
+                    Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro);
+                    Thread.Sleep(1200);
 
-                        var resultado = MessageBox.Show("O Sistema ficou inativo desde " + data + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4)));
 
-                        Dispatcher.Invoke(new Action(() =>
-                        {
-                            this.Show();
+                    temporizador.Elapsed += Cronometro;
 
-                        }));
-
-                        if (resultado == MessageBoxResult.Yes)
-                        {
-                            var registro = new Registro();
-                            //Adiciona 3 minutus para bater com o timesheet de papel
-
-                            registro.Saida = DateTime.Parse(data).AddMinutes(3).ToShortTimeString();
-                            registro.Atividade = " ";
-                            registro.Conferir = "OK";
-
-                            registro.RegistrarSaida(this);
-
-
-                            Thread.Sleep(4000);
-
-                            registro = new Registro();
-                            //Remove 4 minutos para bater com o timesheet do papel
-
-                            registro.Dia = DateTime.Now.ToString("dd/MM");
-                            registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
-                            registro.Conferir = "OK";
-
-                            registro.RegistrarEntrada(this);
-
-                        }
-                        else
-                        {
-                            if (DateTime.Now >= DateTime.Parse(DateTime.Parse(data).ToShortDateString() + " 23:59:59"))
-                            {
-                                a.Elapsed -= Cronometro;
-
-                                var registro = new Registro();
-                                //Adiciona 3 minutus para bater com o timesheet de papel
-
-                                registro.Saida = DateTime.Now.ToShortTimeString();
-                                registro.Conferir = "OK";
-                                registro.Atividade = " ";
-
-                                registro.RegistrarSaida(this);
-
-                                Thread.Sleep(1200);
-
-                                registro = new Registro();
-                                //Remove 4 minutos para bater com o timesheet do papel
-
-                                registro.Dia = DateTime.Now.ToString("dd/MM");
-                                registro.Entrada = DateTime.Now.ToShortTimeString();
-                                registro.Conferir = "OK";
-
-                                registro.RegistrarEntrada(this);
-
-                                a.Elapsed += Cronometro;
-                            }
-
-                        }
-
-                        Notificando = false;
-                    }
-
-                    if (DateTime.Now >= DateTime.Parse("23:59:59"))
-                    {
-                        a.Elapsed -= Cronometro;
-
-                        var registro = new Registro();
-                        //Adiciona 3 minutus para bater com o timesheet de papel
-
-                        registro.Saida = DateTime.Now.ToShortTimeString();
-                        registro.Conferir = "OK";
-                        registro.Atividade = " ";
-
-                        registro.RegistrarSaida(this);
-
-                        Thread.Sleep(1200);
-
-                        registro = new Registro();
-                        //Remove 4 minutos para bater com o timesheet do papel
-
-                        registro.Dia = DateTime.Now.ToString("dd/MM");
-                        registro.Entrada = DateTime.Now.ToShortTimeString();
-                        registro.Conferir = "OK";
-
-                        registro.RegistrarEntrada(this);
-
-                        a.Elapsed += Cronometro;
-
-                    }
+                    db.SalvarAlteracao();
                 }
             }
+
+            db.Dispose();
         }
 
-
-        /// <summary>
-        /// Captura o travamento da sessão do windows
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
         {
             if (!entrada)
             {
-                string[] linhas = new string[] { DateTime.Now.ToString()};
-                System.IO.File.WriteAllLines(Configuracao.Logs + "SwUser.log", linhas);
+                File.WriteAllText(Configuracao.Logs + "SwUser.log", DateTime.Now.ToString());
                 entrada = true;
-                a.Elapsed -= Cronometro;
+                temporizador.Elapsed -= Cronometro;
             }
             else
             {
-                a.Elapsed += Cronometro;
-                if (System.IO.File.Exists(Configuracao.Logs + "SwUser.log"))
-                {
-                    this.Hide();
-                    this.Activate();
-                    this.Topmost = true;  // important
-                    this.Topmost = false; // important
-                    this.Focus();         // important
-
-                    var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "SwUser.log");
-                    var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
-                    var resultado = MessageBox.Show("Foi registrado um logout as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                    this.Show();
-
-                    if (resultado == MessageBoxResult.Yes)
-                    {
-                        var registro = new Registro();
-                        //Adiciona 3 minutus para bater com o timesheet de papel
-
-                        registro.Saida = DateTime.Parse(linha[0]).AddMinutes(3).ToShortTimeString();
-                        registro.Atividade = " ";
-                        registro.Conferir = "OK";
-
-                        registro.RegistrarSaida(this);
-
-                        Thread.Sleep(3000);
-
-                        registro = new Registro();
-                        //Remove 4 minutos para bater com o timesheet do papel
-
-                        registro.Dia = DateTime.Now.ToString("dd/MM");
-                        registro.Entrada = data;
-                        registro.Conferir = "OK";
-
-                        registro.RegistrarEntrada(this);
-
-                    }
-
-                    System.IO.File.Delete(Configuracao.Logs + "SwUser.log");
-                }
+                temporizador.Elapsed += Cronometro;
+                if (File.Exists(Configuracao.Logs + "SwUser.log"))
+                    AlertaSaida("Foi registrado um logout as {0} deseja registrar como uma saída?", "Logout detectado", Configuracao.Logout);
 
                 entrada = false;
             }
         }
 
-        /// <summary>
-        /// Método que grava o momento do shutdown do windows
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
         {
-            string[] linhas = new string[] { DateTime.Now.ToString() };
-            System.IO.File.WriteAllLines(Configuracao.Logs + "ShutUser.log", linhas);
+            File.WriteAllText(Configuracao.Logs + "ShutUser.log", DateTime.Now.ToString());
             entrada = true;
         }
 
-        /// <summary>
-        /// Evento de click para o botão Entrar
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
         private void btnEntrada_Click(object s, EventArgs e)
         {
-            try
+            using (var db = new RegistroRepositorio())
             {
-                var registro = new Registro();
-                //Remove 4 minutos para bater com o timesheet do papel
-
-                registro.Dia = DateTime.Now.ToString("dd/MM");
-                registro.Entrada = DateTime.Now.AddMinutes(-4).ToShortTimeString();
-                registro.Conferir = (ckbConferir.IsChecked == true ? "Conferir" : "OK");
-
-                registro.RegistrarEntrada(this);
+                var novoRegistro = Registro.Entrar(DateTime.Now);
+                db.ListarRegistros().Add(novoRegistro);
+                db.SalvarAlteracao();
 
                 btnEntrada.IsEnabled = false;
                 btnSair.IsEnabled = true;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-
+            
         }
 
-        /// <summary>
-        /// Evento de click para o botão exportar
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
+        private void btnSair_Click(object s, EventArgs e)
+        {
+            using (var db = new RegistroRepositorio())
+            {
+                var ultimoRegistro = db.ObterUltimoRegistro();
+                Registro.Sair(DateTime.Now, ultimoRegistro);
+
+                db.SalvarAlteracao();
+
+                btnEntrada.IsEnabled = true;
+                btnSair.IsEnabled = false;
+            }
+        }
+
         private void btnExportar_Click(object s, EventArgs e)
         {
-            //DataTable dt = new DataTable(Configuracao.Path);
-
-            //var exApp = new Excel.Application();
-            //exApp.Visible = true;
-
-            //Excel.Workbook wb = exApp.Workbooks.Add(Excel.XlWBATemplate.xlWBATWorksheet);
-            //Excel.Worksheet ws = (Excel.Worksheet)wb.Worksheets[1];
-
-            Task.Run(() => ExportarExcel());
+            Task.Run(() => Excel.ExportarExcel());
         }
 
-        /// <summary>
-        /// Abre a pasta de configuração
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
         private void btnConfig_Click(object s, EventArgs e)
         {
             System.Diagnostics.Process.Start(Configuracao.Diretorio);
@@ -380,142 +208,7 @@ namespace Timesheet
 
         #endregion
 
-        #region Excel
-
-        /// <summary>
-        /// Exporta o excel
-        /// </summary>
-        private void ExportarExcel()
-        {
-            try
-            {
-                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
-                    Process.GetProcessesByName("EXCEL")[i].Kill();
-
-                //var desc = new EXCEL.Workbook();
-                OpenFileDialog dialogo = new OpenFileDialog();
-                dialogo.ShowDialog();
-
-                var timesheetExcel = dialogo.FileName;
-
-                if (string.IsNullOrEmpty(timesheetExcel))
-                    return;
-
-                var exApp = new Excel.Application();
-                var work = exApp.Workbooks.Open(timesheetExcel, 0, false, 5, "", "", false, Excel.XlPlatform.xlWindows, "", true, false, 0, true, false, false);
-                exApp.Visible = true;
-
-                Excel.Worksheet excelWorksheet = null;
-                foreach (Excel.Worksheet worksheet in work.Worksheets)
-                    excelWorksheet = worksheet;
-
-                if (excelWorksheet == null)
-                    return;
-
-                using (StreamReader sr = new StreamReader(Configuracao.Relatorio))
-                {
-                    var linha = sr.ReadLine();
-                    linha = sr.ReadLine();
-                    int linhaEditavel = 1;
-                    int linhaEditavelAnterior = linhaEditavel;
-                    while (linha != null)
-                    {
-                        var dados = linha.Split(';');
-                        if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
-                        {
-                            Thread.Sleep(2500);
-                            linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet);
-                            if (linhaEditavel == linhaEditavelAnterior)
-                                linhaEditavel++;
-                            else if (linhaEditavel < linhaEditavelAnterior)
-                            {
-                                var diferenca = linhaEditavelAnterior - linhaEditavel;
-                                linhaEditavel += (diferenca + 1);
-                            }
-
-                            if (linhaEditavel != -1)
-                            {
-                                var entrada = Convert.ToDateTime(dados[1]);
-                                var saida = Convert.ToDateTime(dados[3]);
-                                var desc = dados[5];
-
-                                var totalHrs = (saida - entrada).TotalHours;
-
-                                Excel.Range cellEntrada = (Excel.Range)excelWorksheet.get_Range("D" + linhaEditavel, "D" + linhaEditavel);
-                                Excel.Range cellSaida = (Excel.Range)excelWorksheet.get_Range("E" + linhaEditavel, "E" + linhaEditavel);
-                                Excel.Range cellDesc = cellDesc = (Excel.Range)excelWorksheet.get_Range("H" + linhaEditavel, "H" + linhaEditavel);
-
-                                cellEntrada.Value = entrada.ToShortTimeString();
-                                cellSaida.Value = saida.ToShortTimeString();
-                                cellDesc.Value = desc;
-
-                                //cellEntrada.Value = "";
-                                //cellSaida.Value = "";
-                                //cellDesc.Value = "";
-
-                                linhaEditavelAnterior = linhaEditavel;
-                            }
-
-                        }
-
-                        linha = sr.ReadLine();
-                    }
-
-                    work.Save();
-                    work.Close();
-                    sr.Close();
-                }
-
-                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
-                {
-                    Process.GetProcessesByName("EXCEL")[i].Kill();
-                }
-
-                Process.Start(timesheetExcel);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ocorreu um erro durante o processo de exportação!");
-
-            }
-        }
-
-        /// <summary>
-        /// Obtem a linha da data para edição
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="excelWorksheet"></param>
-        /// <param name="startIndex"></param>
-        /// <returns></returns>
-        public int ObterLinhaDaData(DateTime data, Excel.Worksheet excelWorksheet)
-        {
-            var dataLinha = new DateTime();
-            int startIndex = 0;
-            while (data.ToShortDateString() != dataLinha.ToShortDateString())
-            {
-                startIndex++;
-
-                Excel.Range cellRotulo = (Excel.Range)excelWorksheet.get_Range("A" + startIndex, "A" + startIndex);
-
-                if (cellRotulo.Value != null)
-                {
-                    var valor = Convert.ToString(cellRotulo.Value);
-                    var dataLinha2 = Convert.ToDateTime(dataLinha.ToShortDateString());
-                    var parse = DateTime.TryParse(valor, out dataLinha2);
-                    if (parse == true)
-                        dataLinha = dataLinha2;
-                }
-
-                if (startIndex == 100)
-                    return -1;
-
-            }
-
-            return startIndex;
-        }
-
-        #endregion
-
+        #region Métodos Gerais
         /// <summary>
         /// Registra a aplicação para iniciar junto com o windows
         /// </summary>
@@ -538,113 +231,9 @@ namespace Timesheet
         /// </summary>
         private void IniciarArquivos()
         {
-            if (System.IO.File.Exists(Configuracao.Logs + "ShutUser.log"))
-            {
-                this.Hide();
-                this.Activate();
-                this.Topmost = true;  // important
-                this.Topmost = false; // important
-                this.Focus();         // important
 
-                var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "ShutUser.log");
-                var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
-
-                var resultado = MessageBox.Show("O sistema foi desligado as " + linha[0] + " deseja registrar como uma saída?", "shutdown detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                
-                this.Show();
-
-                if (resultado == MessageBoxResult.Yes)
-                {
-                    var registro = new Registro();
-                    //Adiciona 3 minutus para bater com o timesheet de papel
-
-                    registro.Saida = DateTime.Parse(linha[0]).AddMinutes(3).ToShortTimeString();
-                    registro.Atividade = " ";
-                    registro.Conferir = "OK";
-
-                    registro.RegistrarSaida(this);
-
-                    registro = new Registro();
-                    //Remove 4 minutos para bater com o timesheet do papel
-
-                    registro.Dia = DateTime.Now.ToString("dd/MM");
-                    registro.Entrada = data;
-                    registro.Conferir = "OK";
-
-                    registro.RegistrarEntrada(this);
-                }
-
-                System.IO.File.Delete(Configuracao.Logs + "ShutUser.log");
-            }
-            else if (System.IO.File.Exists(Configuracao.Logs + "SwUser.log"))
-            {
-                this.Hide();
-                this.Activate();
-                this.Topmost = true;  // important
-                this.Topmost = false; // important
-                this.Focus();         // important
-
-                var linha = System.IO.File.ReadAllLines(Configuracao.Logs + "SwUser.log");
-                var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
-                var resultado = MessageBox.Show("Foi registrado um logout as " + linha[0] + " deseja registrar como uma saída?", "logout detectado", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                this.Show();
-
-                if (resultado == MessageBoxResult.Yes)
-                {
-                    var registro = new Registro();
-                    //Adiciona 3 minutus para bater com o timesheet de papel
-
-                    registro.Saida = DateTime.Parse(linha[0]).AddMinutes(3).ToShortTimeString();
-                    registro.Atividade = " ";
-                    registro.Conferir = "OK";
-
-                    registro.RegistrarSaida(this);
-
-                    registro = new Registro();
-                    //Remove 4 minutos para bater com o timesheet do papel
-
-                    registro.Dia = DateTime.Now.ToString("dd/MM");
-                    registro.Entrada = data;
-                    registro.Conferir = "OK";
-
-                    registro.RegistrarEntrada(this);
-
-                }
-
-                System.IO.File.Delete(Configuracao.Logs + "SwUser.log");
-            }
-            else
-            {
-                var ultimaLinha = UltimoRegistro();
-                if (ultimaLinha.Contains("Dia;Entrada;Status;Saida;Status"))
-                {
-                    this.Hide();
-                    this.Activate();
-                    this.Topmost = true;  // important
-                    this.Topmost = false; // important
-                    this.Focus();         // important
-
-                    var data = DateTime.Now.AddMinutes(-4).ToShortTimeString();
-                    var resultado = MessageBox.Show("Registrar entrada?", "Iniciando mês", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                    this.Show();
-
-                    if (resultado == MessageBoxResult.Yes)
-                    {
-                        var registro = new Registro();
-                        //Remove 4 minutos para bater com o timesheet do papel
-
-                        registro.Dia = DateTime.Now.ToString("dd/MM");
-                        registro.Entrada = data;
-                        registro.Conferir = "OK";
-
-                        registro.RegistrarEntrada(this);
-
-                    }
-                }
-
-            }
+            if (!Directory.Exists(Configuracao.Diretorio))
+                Directory.CreateDirectory(Configuracao.Diretorio);
 
             if (!Directory.Exists(Configuracao.Logs))
                 Directory.CreateDirectory(Configuracao.Logs);
@@ -652,70 +241,78 @@ namespace Timesheet
             if (!File.Exists(Configuracao.Atividades))
                 File.Create(Configuracao.Atividades);
 
+            if (!File.Exists(Configuracao.Relatorio))
+            {
+                File.WriteAllText(Configuracao.Relatorio, Registro.Cabecalho);
+            }
+
+            if (!Directory.Exists(Configuracao.PathConfig))
+            {
+                Directory.CreateDirectory(Configuracao.PathConfig);
+                File.WriteAllText(Configuracao.Config, Configuracao.ConfigFile);
+            }
+
             if (File.Exists(Configuracao.Relatorio))
             {
                 try
                 {
-                    var ultimaLinha = UltimoRegistro();
+                    var db = new RegistroRepositorio();
 
-                    if (!string.IsNullOrEmpty(ultimaLinha))
+                    var ultimaLinha = db.ObterUltimoRegistro();
+
+                    if (ultimaLinha != null)
                     {
-                        RegistrarFeriado(ultimaLinha);
+                        RegistrarFeriado(ultimaLinha.Dia);
                         AplicarEstadoBtn(ultimaLinha);
                     }
+
+                    db.Dispose();
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message);
                 }
             }
-            else
-            {
-                if (!Directory.Exists(Configuracao.Diretorio))
-                    Directory.CreateDirectory(Configuracao.Diretorio);
-
-                using (StreamWriter wr = new StreamWriter(Configuracao.Relatorio, true))
-                {
-                    wr.Write("Dia;");
-                    wr.Write("Entrada;");
-                    wr.Write("Status;");
-                    wr.Write("Saida;");
-                    wr.Write("Status;");
-                    wr.Write("Atividade");
-                    wr.Close();
-                }
-            }
-
-            if (!Directory.Exists(Configuracao.PathConfig))
-            {
-                Directory.CreateDirectory(Configuracao.PathConfig);
-
-                using (StreamWriter wr = new StreamWriter(Configuracao.Config, true))
-                {
-                    wr.WriteLine("# Dados para pagamento");
-                    wr.WriteLine("");
-                    wr.WriteLine("HORA = 176");
-                    wr.WriteLine("VALOR_HORA = 30");
-                    wr.WriteLine("QTD_FERIADOS = 0");
-                    wr.WriteLine("");
-                    wr.WriteLine("# Dados para exibição");
-                    wr.WriteLine("");
-                    wr.WriteLine("EXIBIR_PRETENCAO = true");
-                    wr.WriteLine("EXIBIR_VALOR_ATUAL = true");
-                    wr.WriteLine("");
-                    wr.WriteLine("# Dados de registro");
-                    wr.WriteLine("");
-                    wr.WriteLine("# tempo em minutos para que seja registrado uma saída quando o sistema estiver inativo");
-                    wr.WriteLine("TEMPO_INATIVO = 20");
-
-                    wr.Close();
-
-                    MessageBox.Show("Arquivo de configuração criado em 'Meus Documento/Timesheet'");
-                }
-            }
-
         }
 
+        /// <summary>
+        /// Verifica se existe algum log
+        /// </summary>
+        public void VerificarSaida()
+        {
+            var db = new RegistroRepositorio();
+
+            if (File.Exists(Configuracao.Shutdown))
+                AlertaSaida("O sistema foi desligado as {0} deseja registrar como uma saída?", "Shutdown detectado", Configuracao.Shutdown);
+
+            else if (File.Exists(Configuracao.Logout))
+                AlertaSaida("Foi registrado um logout as {0} deseja registrar como uma saída?", "Logout detectado", Configuracao.Logout);
+
+            else if (db.ObterUltimoRegistro() == null)
+            {
+                this.Hide();
+                this.Activate();
+                this.Topmost = true;  // important
+                this.Topmost = false; // important
+                this.Focus();         // important
+
+                var resultado = MessageBox.Show("Registrar entrada?", "Iniciando mês", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                this.Show();
+
+                if (resultado == MessageBoxResult.Yes)
+                {
+                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now));
+                    db.SalvarAlteracao();
+                }
+            }
+
+            db.Dispose();
+        }
+
+        /// <summary>
+        /// Exibe valores na tela
+        /// </summary>
         public void ExibirValores()
         {
             if (!Configuracao.ExibirPretencao)
@@ -730,42 +327,13 @@ namespace Timesheet
                 lblValorTitulo.Visibility = Visibility.Hidden;
             }
 
+            var Horas = new DateTime().AddHours(Pagamento.Horas / (60 * 60));
+            lblHrs.Content = Horas.ToShortTimeString();
             lblValor.Content = string.Format("{0:C}",Pagamento.Salario());
-            lblHrs.Content = string.Format("{0:0.00}",Pagamento.Horas);
             lblValorEsp.Content = string.Format("{0:C}", Pagamento.SalarioEsperado());
             lblMedia.Content = Pagamento.Media();
             lblHrsPretendidas.Content = Configuracao.HrsEsperadas.ToString();
             lblDiasUtes.Content = Pagamento.QuantidadeDiasUteis();
-        }
-
-       /// <summary>
-       /// Varre o registro.txt e retorna ultimo dia cadastrado
-       /// </summary>
-       /// <returns>Ultimo dia cadastrado</returns>
-        private string UltimoRegistro()
-        {
-            var linha = string.Empty;
-            using (StreamReader sr = new StreamReader(Configuracao.Relatorio))
-            {
-                linha = sr.ReadLine();
-                var linhaAux = string.Empty;
-
-                var hasLinha = true;
-
-                while (hasLinha)
-                {
-                    linhaAux = sr.ReadLine();
-
-                    if (linhaAux == null)
-                        hasLinha = false;
-                    else
-                        linha = linhaAux;
-                }
-
-                sr.Close();
-            }
-
-            return linha;
         }
 
         /// <summary>
@@ -774,6 +342,7 @@ namespace Timesheet
         /// <param name="ultimoDia">Ultimo dia cadastrado (linha completa)</param>
         private void RegistrarFeriado(string ultimoDia)
         {
+            var db = new RegistroRepositorio();
             var dia = ultimoDia.Split('/');
             if(dia.Length > 1)
             {
@@ -784,41 +353,96 @@ namespace Timesheet
                 {
                     var registro = new Registro();
 
-                    registro.Dia = DateTime.Parse(UltimoDiaRegistrado.ToString() + '/' + DateTime.Now.Month.ToString()).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) + ";";
-                    registro.Entrada = ";";
-                    registro.Conferir = ";";
-                    registro.Saida = ";";
-                    registro.Atividade = " ";
+                    registro.Dia = DateTime.Parse(UltimoDiaRegistrado.ToString() + '/' + DateTime.Now.Month.ToString()).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+                    registro.Entrada = "";
+                    registro.StatusEntrada = "";
+                    registro.Saida = "";
+                    registro.StatusSaida = "";
 
-
-                    registro.RegistrarEntrada(this);
-                    registro.RegistrarSaida(this);
+                    db.ListarRegistros().Add(registro);
 
                     UltimoDiaRegistrado++;
                 }
             }
-
+            db.SalvarAlteracao();
+            db.Dispose();
         }
 
         /// <summary>
-        /// Verifica qual foi a ultima ação salva e e habilita o botão para dar seguencia aos registros
+        /// Verifica qual foi a ultima ação salva e habilita o botão para dar seguencia aos registros
         /// </summary>
         /// <param name="ultimaLinha"></param>
-        public void AplicarEstadoBtn(string ultimaLinha)
+        public void AplicarEstadoBtn(Registro registro)
         {
-            var linhaStart = ultimaLinha.Length - 3;
-            var entradaRegistada = ultimaLinha.Substring(linhaStart, ultimaLinha.Length - linhaStart).Contains(" ; ");
-            if (entradaRegistada)
+            if (registro.StatusUsuario == Registro.Usuario.Working)
             {
                 btnEntrada.IsEnabled = false;
                 btnSair.IsEnabled = true;
             }
         }
 
-        
+        public void AlertaSaida(string msg, string titulo, string path, bool elapsed = false, DateTime data = new DateTime())
+        {
+            var db = new RegistroRepositorio();
 
+            this.Hide();
+            this.Activate();
+            this.Topmost = true;  // important
+            this.Topmost = false; // important
+            this.Focus();         // important
 
+            string dataSaida;
 
+            if (string.IsNullOrEmpty(path))
+                dataSaida = data.ToString();
+            else
+            {
+                dataSaida = File.ReadAllLines(path)[0];
+                data = DateTime.Now;
+            }
 
+            var resultado = MessageBox.Show(string.Format(msg, dataSaida), titulo, MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            this.Show();
+
+            if (resultado == MessageBoxResult.Yes)
+            {
+                var ultimoRegistro = db.ObterUltimoRegistro();
+                Registro.Sair(DateTime.Now, ultimoRegistro);
+
+                if (!elapsed)
+                    Registro.Entrar(data);
+                else
+                    Registro.Entrar(DateTime.Now);
+
+            }
+            else if (DateTime.Now >= DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59") && elapsed)
+            {
+                temporizador.Elapsed -= Cronometro;
+
+                var ultimoRegistro = db.ObterUltimoRegistro();
+                Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro);
+                Thread.Sleep(1200);
+                db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4)));
+
+                temporizador.Elapsed += Cronometro;
+            }
+
+            if(!string.IsNullOrEmpty(path))
+                File.Delete(path);
+
+            db.SalvarAlteracao();
+            db.Dispose();
+        }
+
+        private string FormatarHora(double hora, int minuto)
+        {
+            var _hora = Convert.ToInt32(hora) < 10 ? "0" + Convert.ToInt32(hora).ToString() : Convert.ToInt32(hora).ToString();
+            var _minuto = minuto < 10 ? "0" + minuto.ToString() : minuto.ToString();
+
+            return _hora + ":" + _minuto;
+        }
+
+        #endregion
     }
 }

@@ -73,19 +73,21 @@ namespace Timesheet.ModelContext
 
         private void ParseListToTxt()
         {
-            foreach (var reg in Registros)
+            List<string> texto = new List<string>();
+            if (Registros.Count > 0)
             {
-                string[] registro = new string[] {
-                    reg.Dia,
-                    reg.Entrada,
-                    reg.StatusEntrada,
-                    reg.Saida,
-                    reg.StatusSaida,
-                    reg.Atividade
-                };
-
-                File.WriteAllLines(Configuracao.Relatorio, registro);
+                texto.Add(Registro.Cabecalho);
+                foreach (var reg in Registros)
+                {
+                    texto.Add(reg.Dia + ";" +
+                        reg.Entrada + ";" +
+                        reg.StatusEntrada + ";" +
+                        reg.Saida + ";" +
+                        reg.StatusSaida);
+                }
             }
+
+            File.WriteAllLines(Configuracao.Relatorio, texto.ToArray());
         }
 
         public void Dispose()

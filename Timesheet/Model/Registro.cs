@@ -52,6 +52,7 @@ namespace Timesheet.Model
             }
         }
 
+        public static string Cabecalho = "Dia;Entrada;StatusEntrada;Saida;StatusSaida";
 
         public enum Usuario
         {
@@ -64,5 +65,23 @@ namespace Timesheet.Model
         /// Propriedade para manter a compatibilidade com a versão atual, essa propriedade irá ser substituida para "StatusEntrada" e "StatusSaida"
         /// </summary>
         public string Conferir { get; set; }
+
+        public static Registro Entrar(DateTime data)
+        {
+            var registro = new Registro();
+            registro.Dia = data.ToString("dd/MM/yyyy");
+            registro.Entrada = data.AddMinutes(-4).ToShortTimeString();
+            registro.StatusEntrada = "OK";
+
+            return registro;
+        }
+
+        public static Registro Sair(DateTime data, Registro registro)
+        {
+            registro.Saida = data.AddMinutes(4).ToShortTimeString();
+            registro.StatusSaida = "OK";
+
+            return registro;
+        }
     }
 }
