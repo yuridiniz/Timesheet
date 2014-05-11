@@ -410,12 +410,14 @@ namespace Timesheet
             {
                 var ultimoRegistro = db.ObterUltimoRegistro();
                 Registro.Sair(DateTime.Now, ultimoRegistro, this);
+                Registro entrada;
 
                 if (!elapsed)
-                    Registro.Entrar(data, this);
+                    entrada = Registro.Entrar(data, this);
                 else
-                    Registro.Entrar(DateTime.Now, this);
+                    entrada = Registro.Entrar(DateTime.Now, this);
 
+                db.ListarRegistros().Add(entrada);
             }
             else if (DateTime.Now >= DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59") && elapsed)
             {
