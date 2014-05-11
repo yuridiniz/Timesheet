@@ -121,7 +121,7 @@ namespace Timesheet
                     Notificando = true;
                     Dispatcher.Invoke(new Action(() =>
                     {
-                        AlertaSaida("O Sistema ficou inativo desde {0} deseja registrar como uma saída?", "O Sistema ficou inativo", string.Empty, true, DateTime.Parse(DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString()));
+                        AlertarSaida("O Sistema ficou inativo desde {0} deseja registrar como uma saída?", "O Sistema ficou inativo", string.Empty, true, DateTime.Parse(DateTime.Now.AddSeconds(-1 * hrsElapsed).ToString()));
                     }));
 
                     Notificando = false;
@@ -157,7 +157,7 @@ namespace Timesheet
             {
                 temporizador.Elapsed += Cronometro;
                 if (File.Exists(Configuracao.Logs + "SwUser.log"))
-                    AlertaSaida("Foi registrado um logout as {0} deseja registrar como uma saída?", "Logout detectado", Configuracao.Logout);
+                    AlertarSaida("Foi registrado um logout as {0} deseja registrar como uma saída?", "Logout detectado", Configuracao.Logout);
 
                 entrada = false;
             }
@@ -284,10 +284,10 @@ namespace Timesheet
             var db = new RegistroRepositorio();
 
             if (File.Exists(Configuracao.Shutdown))
-                AlertaSaida("O sistema foi desligado as {0} deseja registrar como uma saída?", "Shutdown detectado", Configuracao.Shutdown);
+                AlertarSaida("O sistema foi desligado as {0} deseja registrar como uma saída?", "Shutdown detectado", Configuracao.Shutdown);
 
             else if (File.Exists(Configuracao.Logout))
-                AlertaSaida("Foi registrado um logout as {0} deseja registrar como uma saída?", "Logout detectado", Configuracao.Logout);
+                AlertarSaida("Foi registrado um logout as {0} deseja registrar como uma saída?", "Logout detectado", Configuracao.Logout);
 
             else if (db.ObterUltimoRegistro() == null)
             {
@@ -382,7 +382,7 @@ namespace Timesheet
             }
         }
 
-        public void AlertaSaida(string msg, string titulo, string path, bool elapsed = false, DateTime data = new DateTime())
+        public void AlertarSaida(string msg, string titulo, string path, bool elapsed = false, DateTime data = new DateTime())
         {
             var db = new RegistroRepositorio();
 
