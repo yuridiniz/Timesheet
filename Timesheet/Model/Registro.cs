@@ -54,34 +54,37 @@ namespace Timesheet.Model
 
         public static string Cabecalho = "Dia;Entrada;StatusEntrada;Saida;StatusSaida";
 
-        public enum Usuario
-        {
-            Working,
-            Feriado,
-            Off
-        }
-
-        /// <summary>
-        /// Propriedade para manter a compatibilidade com a versão atual, essa propriedade irá ser substituida para "StatusEntrada" e "StatusSaida"
-        /// </summary>
-        public string Conferir { get; set; }
-
-        public static Registro Entrar(DateTime data)
+        public static Registro Entrar(DateTime data, MainWindow ctx)
         {
             var registro = new Registro();
             registro.Dia = data.ToString("dd/MM/yyyy");
             registro.Entrada = data.AddMinutes(-4).ToShortTimeString();
             registro.StatusEntrada = "OK";
 
+            ctx.notifyIcon1.BalloonTipTitle = "Entrada registrada";
+            ctx.notifyIcon1.BalloonTipText = registro.Entrada;
+            ctx.notifyIcon1.ShowBalloonTip(3000);
+
             return registro;
         }
 
-        public static Registro Sair(DateTime data, Registro registro)
+        public static Registro Sair(DateTime data, Registro registro, MainWindow ctx)
         {
             registro.Saida = data.AddMinutes(4).ToShortTimeString();
             registro.StatusSaida = "OK";
 
+            ctx.notifyIcon1.BalloonTipTitle = "Saída registrada";
+            ctx.notifyIcon1.BalloonTipText = registro.Saida;
+            ctx.notifyIcon1.ShowBalloonTip(3000);
+
             return registro;
+        }
+
+        public enum Usuario
+        {
+            Working,
+            Feriado,
+            Off
         }
     }
 }

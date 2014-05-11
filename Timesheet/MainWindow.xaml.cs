@@ -40,6 +40,12 @@ namespace Timesheet
         public MainWindow()
         {
             InitializeComponent();
+
+            notifyIcon1 = new Forms.NotifyIcon();
+            notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
+            notifyIcon1.Visible = true;
+            notifyIcon1.Text = "Timesheet";
+
             RegistrarStartup();
             IniciarArquivos();
             
@@ -48,11 +54,6 @@ namespace Timesheet
 
             VerificarSaida();
             ExibirValores();
-
-            notifyIcon1 = new Forms.NotifyIcon();
-            notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
-            notifyIcon1.Visible = true;
-            notifyIcon1.Text = "Timesheet";
 
             temporizador = new System.Timers.Timer();
             temporizador.Interval = 1000;
@@ -130,10 +131,10 @@ namespace Timesheet
                 {
                     temporizador.Elapsed -= Cronometro;
 
-                    Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro);
+                    Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro, this);
                     Thread.Sleep(1200);
 
-                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4)));
+                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4), this));
 
                     temporizador.Elapsed += Cronometro;
 
@@ -172,7 +173,7 @@ namespace Timesheet
         {
             using (var db = new RegistroRepositorio())
             {
-                var novoRegistro = Registro.Entrar(DateTime.Now);
+                var novoRegistro = Registro.Entrar(DateTime.Now, this);
                 db.ListarRegistros().Add(novoRegistro);
                 db.SalvarAlteracao();
 
@@ -187,7 +188,7 @@ namespace Timesheet
             using (var db = new RegistroRepositorio())
             {
                 var ultimoRegistro = db.ObterUltimoRegistro();
-                Registro.Sair(DateTime.Now, ultimoRegistro);
+                Registro.Sair(DateTime.Now, ultimoRegistro, this);
 
                 db.SalvarAlteracao();
 
@@ -302,7 +303,7 @@ namespace Timesheet
 
                 if (resultado == MessageBoxResult.Yes)
                 {
-                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now));
+                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now, this));
                     db.SalvarAlteracao();
                 }
             }
@@ -408,12 +409,12 @@ namespace Timesheet
             if (resultado == MessageBoxResult.Yes)
             {
                 var ultimoRegistro = db.ObterUltimoRegistro();
-                Registro.Sair(DateTime.Now, ultimoRegistro);
+                Registro.Sair(DateTime.Now, ultimoRegistro, this);
 
                 if (!elapsed)
-                    Registro.Entrar(data);
+                    Registro.Entrar(data, this);
                 else
-                    Registro.Entrar(DateTime.Now);
+                    Registro.Entrar(DateTime.Now, this);
 
             }
             else if (DateTime.Now >= DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59") && elapsed)
@@ -421,9 +422,9 @@ namespace Timesheet
                 temporizador.Elapsed -= Cronometro;
 
                 var ultimoRegistro = db.ObterUltimoRegistro();
-                Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro);
+                Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro, this);
                 Thread.Sleep(1200);
-                db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4)));
+                db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4), this));
 
                 temporizador.Elapsed += Cronometro;
             }

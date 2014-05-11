@@ -12,10 +12,8 @@ namespace Timesheet.Model
         public static double HrsEsperadas { get; set; }
         public static int QtdFeriados { get; set; }
         public static double ValorHr { get; set; }
-
         public static bool ExibirPretencao { get; set; }
         public static bool ExibirValor { get; set; }
-
         public static int TempoInativo { get; set; }
 
         public static string Diretorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/";
