@@ -66,6 +66,8 @@ namespace Timesheet.Model
             Horas = listaRegistros.Sum(p => p.TotalHoras);
             DiasTrabalhados = listaRegistros.Where(p => p.StatusUsuario != Registro.Usuario.Feriado && p.Dia != DateTime.Now.ToShortDateString()).GroupBy(p => p.Dia).Count();
 
+            db.Dispose();
+
             #region Refatoring
             //using (StreamReader sr = new StreamReader(Configuracao.Path))
             //{

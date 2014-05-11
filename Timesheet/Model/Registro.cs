@@ -59,6 +59,10 @@ namespace Timesheet.Model
             var registro = new Registro();
             registro.Dia = data.ToString("dd/MM/yyyy");
             registro.Entrada = data.AddMinutes(-4).ToShortTimeString();
+
+            if (data.Hour == 00 && data.Minute >= 00 + 4)
+                registro.Entrada = data.ToShortTimeString();
+
             registro.StatusEntrada = "OK";
 
             ctx.notifyIcon1.BalloonTipTitle = "Entrada registrada";
@@ -71,6 +75,10 @@ namespace Timesheet.Model
         public static Registro Sair(DateTime data, Registro registro, MainWindow ctx)
         {
             registro.Saida = data.AddMinutes(4).ToShortTimeString();
+
+            if (data.Hour == 23 && data.Minute >= 59 - 4)
+                registro.Saida = data.ToShortTimeString();
+                
             registro.StatusSaida = "OK";
 
             ctx.notifyIcon1.BalloonTipTitle = "Saída registrada";
