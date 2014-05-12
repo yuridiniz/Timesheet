@@ -50,8 +50,8 @@ namespace Timesheet.ModelContext
         private List<Registro> ParseTxtToList(string[] linhas)
         {
             List<Registro> tabela = new List<Registro>();
-            
-            string[] cabecalho = ObterCabecalho(linhas);
+
+            string[] cabecalho = Registro.Cabecalho.Split(';');
 
             for (var i = 1; i < linhas.Length; i++)
             {
