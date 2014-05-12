@@ -72,6 +72,7 @@ namespace Timesheet
             btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
             btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
             bar.MouseDown += (e, s) => { this.DragMove(); };
+            btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
 
         }
 

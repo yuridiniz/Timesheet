@@ -42,6 +42,11 @@
                             <Image Width="18" Source="/Timesheet;component/Images/excel.jpg" />
                         </StackPanel>
                     </Button>
+                    <Button Width="26" Name="btnExportarTeste" ToolTip="Criar arquivo excel (vcersão beta)">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Opacity="1" Width="18" Source="/Timesheet;component/Images/excel.jpg" />
+                        </StackPanel>
+                    </Button>
                     <Button Width="18" HorizontalAlignment="Right" Margin="4,4,4,4" x:Name="btnClose" ToolTip="Fechar">
                         <StackPanel Background="#FFFF9292" Width="18" HorizontalAlignment="Left">
                             <Label FontSize="12" HorizontalAlignment="Center" Padding="0" Content="X" Foreground="#FF574545" />
