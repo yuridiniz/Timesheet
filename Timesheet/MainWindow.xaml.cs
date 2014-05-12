@@ -412,7 +412,8 @@ namespace Timesheet
                 this.Hide();
                 this.Activate();
                 this.Topmost = true;  // important
-                this.Topmost = false; // important
+                this.Topmost = false;  // important
+                this.Topmost = true;  // important
                 this.Focus();         // important
 
                 string dataSaida;
@@ -424,6 +425,9 @@ namespace Timesheet
                     dataSaida = File.ReadAllLines(path)[0];
                     data = DateTime.Now;
                 }
+
+                this.WindowState = System.Windows.WindowState.Normal;
+                this.ShowInTaskbar = true;
 
                 var resultado = MessageBox.Show(string.Format(msg, dataSaida), titulo, MessageBoxButton.YesNo, MessageBoxImage.Question);
 
