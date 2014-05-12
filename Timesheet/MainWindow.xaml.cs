@@ -384,63 +384,70 @@ namespace Timesheet
 
         public void AlertarSaida(string msg, string titulo, string path, bool elapsed = false, DateTime data = new DateTime())
         {
-            var db = new RegistroRepositorio();
-
-            this.Hide();
-            this.Activate();
-            this.Topmost = true;  // important
-            this.Topmost = false; // important
-            this.Focus();         // important
-
-            string dataSaida;
-
-            if (string.IsNullOrEmpty(path))
-                dataSaida = data.ToString();
-            else
+            try
             {
-                dataSaida = File.ReadAllLines(path)[0];
-                data = DateTime.Now;
-            }
+                var db = new RegistroRepositorio();
 
-            var resultado = MessageBox.Show(string.Format(msg, dataSaida), titulo, MessageBoxButton.YesNo, MessageBoxImage.Question);
+                this.Hide();
+                this.Activate();
+                this.Topmost = true;  // important
+                this.Topmost = false; // important
+                this.Focus();         // important
 
-            this.Show();
+                string dataSaida;
 
-            if (resultado == MessageBoxResult.Yes)
-            {
-                var ultimoRegistro = db.ObterUltimoRegistro();
-                Registro.Sair(DateTime.Now, ultimoRegistro, this);
-                Registro entrada;
-
-                if (!elapsed)
-                    entrada = Registro.Entrar(data, this);
+                if (string.IsNullOrEmpty(path))
+                    dataSaida = data.ToString();
                 else
-                    entrada = Registro.Entrar(DateTime.Now, this);
+                {
+                    dataSaida = File.ReadAllLines(path)[0];
+                    data = DateTime.Now;
+                }
 
-                db.ListarRegistros().Add(entrada);
+                var resultado = MessageBox.Show(string.Format(msg, dataSaida), titulo, MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                this.Show();
+
+                if (resultado == MessageBoxResult.Yes)
+                {
+                    var ultimoRegistro = db.ObterUltimoRegistro();
+                    Registro.Sair(DateTime.Now, ultimoRegistro, this);
+                    Registro entrada;
+
+                    if (!elapsed)
+                        entrada = Registro.Entrar(data, this);
+                    else
+                        entrada = Registro.Entrar(DateTime.Now, this);
+
+                    db.ListarRegistros().Add(entrada);
+                }
+                else if (DateTime.Now >= DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59") && elapsed)
+                {
+                    temporizador.Elapsed -= Cronometro;
+
+                    var ultimoRegistro = db.ObterUltimoRegistro();
+                    Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro, this);
+                    Thread.Sleep(1200);
+                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4), this));
+
+                    temporizador.Elapsed += Cronometro;
+                }
+
+                if (!string.IsNullOrEmpty(path))
+                    File.Delete(path);
+
+                db.SalvarAlteracao();
+                db.Dispose();
             }
-            else if (DateTime.Now >= DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59") && elapsed)
+            catch (IOException ioExc)
             {
-                temporizador.Elapsed -= Cronometro;
-
-                var ultimoRegistro = db.ObterUltimoRegistro();
-                Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro, this);
-                Thread.Sleep(1200);
-                db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4), this));
-
-                temporizador.Elapsed += Cronometro;
+                MessageBox.Show(ioExc.Message);
             }
-
-            if(!string.IsNullOrEmpty(path))
-                File.Delete(path);
-
-            db.SalvarAlteracao();
-            db.Dispose();
         }
 
         private string FormatarHora(double hora, int minuto)
         {
-            var _hora = Convert.ToInt32(hora) < 10 ? "0" + Convert.ToInt32(hora).ToString() : Convert.ToInt32(hora).ToString();
+            var _hora = Convert.ToInt32(Math.Floor(hora)) < 10 ? "0" + Convert.ToInt32(Math.Floor(hora)).ToString() : Convert.ToInt32(Math.Floor(hora)).ToString();
             var _minuto = minuto < 10 ? "0" + minuto.ToString() : minuto.ToString();
 
             return _hora + ":" + _minuto;

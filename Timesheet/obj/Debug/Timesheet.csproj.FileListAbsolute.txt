@@ -27,18 +27,17 @@ C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesh
 C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.g.resources
 C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.Properties.Resources.resources
 C:\Users\Vinícius Aragão\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.csproj.GenerateResource.Cache
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\bin\Debug\Timesheet.exe.config
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\bin\Debug\Timesheet.exe
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\bin\Debug\Timesheet.pdb
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\CadastrarAtividade.baml
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\MainWindow.baml
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\CadastrarAtividade.g.cs
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\MainWindow.g.cs
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\App.g.cs
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet_MarkupCompile.cache
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.g.resources
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.Properties.Resources.resources
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.csproj.GenerateResource.Cache
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.exe
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.pdb
-C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.csprojResolveAssemblyReference.cache
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\bin\Debug\Timesheet.exe.config
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\bin\Debug\Timesheet.exe
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\bin\Debug\Timesheet.pdb
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\CadastrarAtividade.baml
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\MainWindow.baml
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\CadastrarAtividade.g.cs
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\MainWindow.g.cs
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\App.g.cs
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet_MarkupCompile.cache
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.g.resources
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.Properties.Resources.resources
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.csproj.GenerateResource.Cache
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.exe
+C:\Users\Yuri\Documents\GitHub\Timesheet\Timesheet\obj\Debug\Timesheet.pdb
