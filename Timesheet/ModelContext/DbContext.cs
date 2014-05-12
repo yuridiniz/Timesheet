@@ -59,10 +59,13 @@ namespace Timesheet.ModelContext
                 var calulas = row.Split(';');
                 Registro registro = new Registro();
 
-                for (var c = 0; c < calulas.Length; c++ )
+                for (var c = 0; c < (calulas.Length > 6 ? 6 : calulas.Length); c++)
                 {
                     var prop = registro.GetType().GetProperty(cabecalho[c]);
-                    prop.SetValue(registro, calulas[c].Trim());
+                    if (calulas[c].Trim().Contains('/') && !calulas[c].Trim().Contains("/2014"))
+                        prop.SetValue(registro, calulas[c].Trim()+"/2014");
+                    else
+                        prop.SetValue(registro, calulas[c].Trim());
                 }
 
                 tabela.Add(registro);
