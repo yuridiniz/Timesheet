@@ -52,6 +52,48 @@ namespace Timesheet.Model
             }
         }
 
+        public Semana DiaDaSemana
+        {
+            get
+            {
+                var dia = DateTime.Parse(Dia);
+                var week = dia.DayOfWeek;
+
+                switch (week)
+                {
+                    case DayOfWeek.Sunday: return Semana.Domingo;
+                    case DayOfWeek.Monday: return Semana.Segunda;
+                    case DayOfWeek.Tuesday: return Semana.Terça;
+                    case DayOfWeek.Wednesday: return Semana.Quarta;
+                    case DayOfWeek.Thursday: return Semana.Quinta;
+                    case DayOfWeek.Friday: return Semana.Sexta;
+                    case DayOfWeek.Saturday: return Semana.Sabado;
+                    default: return Semana.Domingo;
+                }
+            }
+        }
+
+        public string TextoSemana
+        {
+            get
+            {
+                var dia = DateTime.Parse(Dia);
+                var week = dia.DayOfWeek;
+
+                switch (week)
+                {
+                    case DayOfWeek.Sunday: return "domingo";
+                    case DayOfWeek.Monday: return "segunda-feira";
+                    case DayOfWeek.Tuesday: return "terça-feira";
+                    case DayOfWeek.Wednesday: return "quarta-feira";
+                    case DayOfWeek.Thursday: return "quinta-feira";
+                    case DayOfWeek.Friday: return "sexta-feira";
+                    case DayOfWeek.Saturday: return "sabado";
+                    default: return "domingo";
+                }
+            }
+        }
+
         public static string Cabecalho = "Dia;Entrada;StatusEntrada;Saida;StatusSaida";
 
         public static Registro Entrar(DateTime data, MainWindow ctx)
@@ -93,6 +135,17 @@ namespace Timesheet.Model
             Working,
             Feriado,
             Off
+        }
+
+        public enum Semana
+        {
+            Domingo,
+            Segunda,
+            Terça,
+            Quarta,
+            Quinta,
+            Sexta,
+            Sabado
         }
     }
 }

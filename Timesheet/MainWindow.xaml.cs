@@ -41,39 +41,49 @@ namespace Timesheet
         {
             InitializeComponent();
 
-            notifyIcon1 = new Forms.NotifyIcon();
-            notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
-            notifyIcon1.Visible = true;
-            notifyIcon1.Text = "Timesheet";
+            try
+            {
+                var qtd = Process.GetProcessesByName("Timesheet").Count();
+                if (qtd >= 2)
+                    Process.GetProcessesByName("Timesheet")[1].Kill();
 
-            RegistrarStartup();
-            IniciarArquivos();
-            
-            Configuracao.CarregarConfiguracoes();
-            Pagamento.CarregarDadosTimesheet();
+                notifyIcon1 = new Forms.NotifyIcon();
+                notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
+                notifyIcon1.Visible = true;
+                notifyIcon1.Text = "Timesheet";
 
-            VerificarSaida();
-            ExibirValores();
+                RegistrarStartup();
+                IniciarArquivos();
 
-            temporizador = new System.Timers.Timer();
-            temporizador.Interval = 1000;
-            temporizador.Elapsed += Cronometro;
-            temporizador.Start();
+                Configuracao.CarregarConfiguracoes();
+                Pagamento.CarregarDadosTimesheet();
 
-            SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
-            SystemEvents.SessionEnding += SystemEvents_SessionEnding;
-            btnEntrada.Click += btnEntrada_Click;
-            btnSair.Click += btnSair_Click;
-            btnExportar.Click += btnExportar_Click;
-            notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
-            btnConfig.Click += btnConfig_Click;
-            this.StateChanged += MainWindow_StateChanged;
+                VerificarSaida();
+                ExibirValores();
 
-            btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
-            btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
-            bar.MouseDown += (e, s) => { this.DragMove(); };
-            btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
+                temporizador = new System.Timers.Timer();
+                temporizador.Interval = 1000;
+                temporizador.Elapsed += Cronometro;
+                temporizador.Start();
 
+                SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+                SystemEvents.SessionEnding += SystemEvents_SessionEnding;
+                btnEntrada.Click += btnEntrada_Click;
+                btnSair.Click += btnSair_Click;
+                btnExportar.Click += btnExportar_Click;
+                notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
+                btnConfig.Click += btnConfig_Click;
+                this.StateChanged += MainWindow_StateChanged;
+
+                btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
+                btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
+                bar.MouseDown += (e, s) => { this.DragMove(); };
+                btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
         }
 
         #region Eventos de Usuário
@@ -354,6 +364,16 @@ namespace Timesheet
                 while (UltimoDiaRegistrado < Hoje)
                 {
                     var registro = new Registro();
+
+                    registro.Dia = DateTime.Parse(UltimoDiaRegistrado.ToString() + '/' + DateTime.Now.Month.ToString()).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+                    registro.Entrada = "";
+                    registro.StatusEntrada = "";
+                    registro.Saida = "";
+                    registro.StatusSaida = "";
+
+                    db.ListarRegistros().Add(registro);
+
+                    registro = new Registro();
 
                     registro.Dia = DateTime.Parse(UltimoDiaRegistrado.ToString() + '/' + DateTime.Now.Month.ToString()).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
                     registro.Entrada = "";

@@ -43,7 +43,11 @@ namespace Timesheet
 
                 RegistroRepositorio rep = new RegistroRepositorio();
                 var lista = rep.ListarRegistros();
-
+                Range tudo = (Range)excelWorksheet.get_Range("A1", "Z200");
+                tudo.Font.Name = "Myriad Web Pro";
+                tudo.Font.Size = 12;
+                tudo.HorizontalAlignment = XlHAlign.xlHAlignCenter;
+                tudo.VerticalAlignment = XlVAlign.xlVAlignCenter;
                 foreach (var item in lista)
                 {
                     var indice = lista.IndexOf(item) + 1;
@@ -56,7 +60,6 @@ namespace Timesheet
                     cellEntrada.NumberFormat = "hh:mm";
                     cellSaida.NumberFormat = "hh:mm";
                     Soma.NumberFormat = "hh:mm";
-
                     cellEntrada.Value = item.Entrada;
                     cellSaida.Value = item.Saida;
 
@@ -70,21 +73,25 @@ namespace Timesheet
                 foreach (var item in listaAgrupada)
                 {
                     indiceFinal = indiceInicial + item.Count() - 1;
-                    excelWorksheet.get_Range("A" + indiceInicial, "A" + indiceFinal).Merge();
-                    excelWorksheet.get_Range("A" + indiceInicial).Value = DateTime.Parse(item.FirstOrDefault().Dia);
-                    excelWorksheet.get_Range("A" + indiceInicial, "A" + indiceFinal).NumberFormat = "dd/mm/yyyy";
+                    var rengeA = excelWorksheet.get_Range("A" + indiceInicial, "A" + indiceFinal);
+                    rengeA.Merge();
+                    rengeA.Value = DateTime.Parse(item.FirstOrDefault().Dia);
+                    rengeA.NumberFormat = "dd/mmm";
+                    rengeA.ColumnWidth = 10;
 
-                    excelWorksheet.get_Range("B" + indiceInicial, "B" + indiceFinal).Merge();
-                    excelWorksheet.get_Range("B" + indiceInicial).Value = item.FirstOrDefault().StatusEntrada.ToString();
+                    var rengeB = excelWorksheet.get_Range("B" + indiceInicial, "B" + indiceFinal);
+                    rengeB.Merge();
+                    rengeB.Value = item.FirstOrDefault().TextoSemana;
+                    rengeB.ColumnWidth = 15;
 
-                    excelWorksheet.get_Range("C" + indiceInicial, "C" + indiceFinal).Merge();
-                    excelWorksheet.get_Range("C" + indiceInicial).Formula = string.Format("=SUM(E{0}:E{1})", indiceInicial,indiceFinal);
-                    excelWorksheet.get_Range("C" + indiceInicial, "C" + indiceFinal).NumberFormat = "hh:mm";
-
+                    var rengeC = excelWorksheet.get_Range("C" + indiceInicial, "C" + indiceFinal);
+                    rengeC.Merge();
+                    rengeC.Formula = string.Format("=SUM(E{0}:E{1})", indiceInicial, indiceFinal);
+                    rengeC.NumberFormat = "hh:mm";
+                    rengeC.ColumnWidth = 10;
 
                     indiceInicial = indiceFinal + 1;
                 }
-
 
                 work.SaveAs(timesheetExcel);
                 work.Close();
