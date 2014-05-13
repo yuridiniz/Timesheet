@@ -45,40 +45,45 @@ namespace Timesheet
             {
                 var qtd = Process.GetProcessesByName("Timesheet").Count();
                 if (qtd >= 2)
-                    Process.GetProcessesByName("Timesheet")[1].Kill();
+                {
+                    EventosPorProcesso.ExibirProcesso(Process.GetProcessesByName("Timesheet")[1].MainWindowHandle);
+                    this.Close();
+                }
+                else
+                {
+                    notifyIcon1 = new Forms.NotifyIcon();
+                    notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
+                    notifyIcon1.Visible = true;
+                    notifyIcon1.Text = "Timesheet";
 
-                notifyIcon1 = new Forms.NotifyIcon();
-                notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
-                notifyIcon1.Visible = true;
-                notifyIcon1.Text = "Timesheet";
+                    RegistrarStartup();
+                    IniciarArquivos();
 
-                RegistrarStartup();
-                IniciarArquivos();
+                    Configuracao.CarregarConfiguracoes();
+                    Pagamento.CarregarDadosTimesheet();
 
-                Configuracao.CarregarConfiguracoes();
-                Pagamento.CarregarDadosTimesheet();
+                    VerificarSaida();
+                    ExibirValores();
 
-                VerificarSaida();
-                ExibirValores();
+                    temporizador = new System.Timers.Timer();
+                    temporizador.Interval = 1000;
+                    temporizador.Elapsed += Cronometro;
+                    temporizador.Start();
 
-                temporizador = new System.Timers.Timer();
-                temporizador.Interval = 1000;
-                temporizador.Elapsed += Cronometro;
-                temporizador.Start();
+                    SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+                    SystemEvents.SessionEnding += SystemEvents_SessionEnding;
+                    btnEntrada.Click += btnEntrada_Click;
+                    btnSair.Click += btnSair_Click;
+                    btnExportar.Click += btnExportar_Click;
+                    notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
+                    btnConfig.Click += btnConfig_Click;
+                    this.StateChanged += MainWindow_StateChanged;
 
-                SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
-                SystemEvents.SessionEnding += SystemEvents_SessionEnding;
-                btnEntrada.Click += btnEntrada_Click;
-                btnSair.Click += btnSair_Click;
-                btnExportar.Click += btnExportar_Click;
-                notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
-                btnConfig.Click += btnConfig_Click;
-                this.StateChanged += MainWindow_StateChanged;
-
-                btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
-                btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
-                bar.MouseDown += (e, s) => { this.DragMove(); };
-                btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
+                    btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
+                    btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
+                    bar.MouseDown += (e, s) => { this.DragMove(); };
+                    btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
+                }
             }
             catch (Exception e)
             {
@@ -121,9 +126,8 @@ namespace Timesheet
 
                 Dispatcher.Invoke(new Action(() =>
                 {
-                    var totalHrs = Pagamento.Horas + diferenca.TotalSeconds / (60 * 60);
-                    var Horas = new DateTime().AddHours(totalHrs);
-                    this.lblHrs.Content = FormatarHora(totalHrs, Horas.Minute); ;
+                    var Horas = new DateTime().AddHours(Pagamento.Horas);
+                    this.lblHrs.Content = FormatarHora(Pagamento.Horas, Horas.Minute); ;
                     this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));
                 }));
 
@@ -142,10 +146,10 @@ namespace Timesheet
                 {
                     temporizador.Elapsed -= Cronometro;
 
-                    Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro, this);
+                    Registro.Sair(DateTime.Now, ultimoRegistro, this);
                     Thread.Sleep(1200);
 
-                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4), this));
+                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now, this));
 
                     temporizador.Elapsed += Cronometro;
 
@@ -339,8 +343,8 @@ namespace Timesheet
                 lblValorTitulo.Visibility = Visibility.Hidden;
             }
 
-            var Horas = new DateTime().AddHours(Pagamento.Horas / (60 * 60));
-            lblHrs.Content = Horas.ToShortTimeString();
+            var Horas = new DateTime().AddHours(Pagamento.Horas);
+            this.lblHrs.Content = FormatarHora(Pagamento.Horas, Horas.Minute); ;
             lblValor.Content = string.Format("{0:C}",Pagamento.Salario());
             lblValorEsp.Content = string.Format("{0:C}", Pagamento.SalarioEsperado());
             lblMedia.Content = Pagamento.Media();

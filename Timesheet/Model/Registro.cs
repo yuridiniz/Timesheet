@@ -102,7 +102,7 @@ namespace Timesheet.Model
             registro.Dia = data.ToString("dd/MM/yyyy");
             registro.Entrada = data.AddMinutes(-4).ToShortTimeString();
 
-            if (data.Hour == 00 && data.Minute >= 00 + 4)
+            if (data.Hour == 00 && data.Minute <= 00 + 4)
                 registro.Entrada = data.ToShortTimeString();
 
             registro.StatusEntrada = "OK";

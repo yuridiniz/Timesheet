@@ -64,6 +64,7 @@
     <Compile Include="CadastrarAtividade.xaml.cs">
       <DependentUpon>CadastrarAtividade.xaml</DependentUpon>
     </Compile>
+    <Compile Include="EventosPorProcesso.cs" />
     <Compile Include="Excel.cs" />
     <Compile Include="ModelContext\DbContext.cs" />
     <Compile Include="Model\Atividade.cs" />

@@ -24,7 +24,7 @@ namespace Timesheet.Repositorio
 
         public Registro ObterUltimoRegistro()
         {
-            var resultado = db.Registros.LastOrDefault();
+            var resultado = db.Registros.LastOrDefault(p => p.StatusUsuario != Registro.Usuario.Feriado);
             return resultado;
         }
 

@@ -12,7 +12,16 @@ namespace Timesheet.Model
 {
     public static class Pagamento
     {
-        public static double Horas { get; set; }
+        public static double Horas
+        {
+            get
+            {
+                RegistroRepositorio db = new RegistroRepositorio();
+                var listaRegistros = db.ListarRegistros();
+
+                return listaRegistros.Sum(p => p.TotalHoras);
+            }
+        }
         public static int DiasTrabalhados { get; set; }
 
         public static int QuantidadeDiasUteis()
@@ -63,7 +72,7 @@ namespace Timesheet.Model
             RegistroRepositorio db = new RegistroRepositorio();
             var listaRegistros = db.ListarRegistros();
 
-            Horas = listaRegistros.Sum(p => p.TotalHoras);
+            //Horas = listaRegistros.Sum(p => p.TotalHoras);
             DiasTrabalhados = listaRegistros.Where(p => p.StatusUsuario != Registro.Usuario.Feriado && p.Dia != DateTime.Now.ToShortDateString()).GroupBy(p => p.Dia).Count();
 
             db.Dispose();
