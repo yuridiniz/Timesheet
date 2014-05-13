@@ -41,4 +41,3 @@ C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.Propertie
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.csproj.GenerateResource.Cache
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.exe
 C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.pdb
-C:\Users\Yuri\Documents\Github\Timesheet\Timesheet\obj\Debug\Timesheet.csprojResolveAssemblyReference.cache

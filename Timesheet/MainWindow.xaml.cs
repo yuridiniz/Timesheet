@@ -440,7 +440,7 @@ namespace Timesheet
                 if (resultado == MessageBoxResult.Yes)
                 {
                     var ultimoRegistro = db.ObterUltimoRegistro();
-                    Registro.Sair(DateTime.Now, ultimoRegistro, this);
+                    Registro.Sair(DateTime.Parse(dataSaida), ultimoRegistro, this);
                     Registro entrada;
 
                     if (!elapsed)
