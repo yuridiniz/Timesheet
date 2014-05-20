@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,12 +19,14 @@ namespace Timesheet.Model
 
         public static string Diretorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/";
         public static string Logs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/";
+        public static string DiretorioBkp = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Bkp/";
         public static string Atividades = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Atividades.txt";
         public static string PathConfig = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Config";
         public static string Config = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Config/Config.ini";
         public static string Relatorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Relatorio.txt";
         public static string Shutdown = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/ShutUser.log";
         public static string Logout = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/SwUser.log";
+        public static string RelatorioLogs { get { return string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Bkp/Log_{0}.log",DateTime.Now.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture)); } }
 
         public static string ConfigFile = @"# Dados para pagamento;;HORA = 176;VALOR_HORA = 30;;QTD_FERIADOS = 0;;
                                             # Dados para exibição;;EXIBIR_PRETENCAO = true;EXIBIR_VALOR_ATUAL = true;;

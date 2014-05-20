@@ -68,6 +68,7 @@
     <Compile Include="Excel.cs" />
     <Compile Include="ModelContext\DbContext.cs" />
     <Compile Include="Model\Atividade.cs" />
+    <Compile Include="Model\Log.cs" />
     <Compile Include="Repositorio\RelatorioRepositorio.cs" />
     <Compile Include="UserActivityHook.cs" />
     <Page Include="CadastrarAtividade.xaml">

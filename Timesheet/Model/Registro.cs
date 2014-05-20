@@ -94,7 +94,7 @@ namespace Timesheet.Model
             }
         }
 
-        public static string Cabecalho = "Dia;Entrada;StatusEntrada;Saida;StatusSaida";
+        public static string Cabecalho { get { return "Dia;Entrada;StatusEntrada;Saida;StatusSaida"; } }
 
         public static Registro Entrar(DateTime data, MainWindow ctx)
         {

@@ -11,24 +11,16 @@ namespace Timesheet.ModelContext
 {
     public class DbContext : IDisposable
     {
-        private List<Registro> _registros;
-        public List<Registro> Registros
-        {
-            get
-            {
-                return _registros;
-            }
-            set
-            {
-                _registros = value;
-            }
-        }
+        public List<Registro> Registros;
+        public List<Atividade> Atividades;
+        public List<Log> Logs;
 
         public DbContext()
         {
-            _registros = new List<Registro>();
-            string[] linhas = File.ReadAllLines(Configuracao.Relatorio);
-            Registros = ParseTxtToList(linhas);
+            Registros = new List<Registro>();
+            string[] linhasRelatorio = File.ReadAllLines(Configuracao.Relatorio);
+
+            Registros = ParseTxtToList<Registro>(linhasRelatorio);
         }
 
         /// <summary>
@@ -47,17 +39,17 @@ namespace Timesheet.ModelContext
             return null;
         }
 
-        private List<Registro> ParseTxtToList(string[] linhas)
+        private List<TArquivo> ParseTxtToList<TArquivo>(string[] linhas) where TArquivo : new()
         {
-            List<Registro> tabela = new List<Registro>();
+            List<TArquivo> tabela = new List<TArquivo>();
 
-            string[] cabecalho = Registro.Cabecalho.Split(';');
+            string[] cabecalho = typeof(TArquivo).GetProperty("Cabecalho").GetValue(null).ToString().Split(';');
 
             for (var i = 1; i < linhas.Length; i++)
             {
                 var row = linhas[i];
                 var calulas = row.Split(';');
-                Registro registro = new Registro();
+                TArquivo registro = new TArquivo();
 
                 for (var c = 0; c < (calulas.Length > 5 ? 5 : calulas.Length); c++)
                 {

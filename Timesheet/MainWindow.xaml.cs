@@ -34,6 +34,7 @@ namespace Timesheet
     {
         bool entrada = false;
         System.Timers.Timer temporizador;
+        System.Timers.Timer bkpRegistro;
         public Forms.NotifyIcon notifyIcon1;
         bool Notificando = false;
 
@@ -51,7 +52,10 @@ namespace Timesheet
                 }
                 else
                 {
+                    temporizador = new System.Timers.Timer();
+                    bkpRegistro = new System.Timers.Timer();
                     notifyIcon1 = new Forms.NotifyIcon();
+
                     notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
                     notifyIcon1.Visible = true;
                     notifyIcon1.Text = "Timesheet";
@@ -65,10 +69,13 @@ namespace Timesheet
                     VerificarSaida();
                     ExibirValores();
 
-                    temporizador = new System.Timers.Timer();
                     temporizador.Interval = 1000;
                     temporizador.Elapsed += Cronometro;
                     temporizador.Start();
+
+                    bkpRegistro.Interval = 1000 * 60 * 5;
+                    bkpRegistro.Elapsed += GravarBkp;
+                    bkpRegistro.Start();
 
                     SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
                     SystemEvents.SessionEnding += SystemEvents_SessionEnding;
@@ -91,7 +98,12 @@ namespace Timesheet
             }
         }
 
-        #region Eventos de Usuário
+        #region Eventos
+
+        private void GravarBkp(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            File.WriteAllText(Configuracao.RelatorioLogs, DateTime.Now.ToString());
+        }
 
         private void notifyIcon1_DoubleClick(object sender, EventArgs e)
         {
@@ -251,6 +263,12 @@ namespace Timesheet
             if (!Directory.Exists(Configuracao.Diretorio))
                 Directory.CreateDirectory(Configuracao.Diretorio);
 
+            if (!Directory.Exists(Configuracao.DiretorioBkp))
+                Directory.CreateDirectory(Configuracao.DiretorioBkp);
+            
+            if (!File.Exists(Configuracao.RelatorioLogs))
+                File.Create(Configuracao.RelatorioLogs);
+
             if (!Directory.Exists(Configuracao.Logs))
                 Directory.CreateDirectory(Configuracao.Logs);
 
@@ -306,11 +324,12 @@ namespace Timesheet
 
             else if (db.ObterUltimoRegistro() == null)
             {
-                this.Hide();
                 this.Activate();
                 this.Topmost = true;  // important
+                Thread.Sleep(100);
                 this.Topmost = false; // important
                 this.Focus();         // important
+                this.Hide();
 
                 var resultado = MessageBox.Show("Registrar entrada?", "Iniciando mês", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
@@ -411,14 +430,16 @@ namespace Timesheet
         {
             try
             {
+                temporizador.Elapsed -= Cronometro;
+
                 var db = new RegistroRepositorio();
 
-                this.Hide();
                 this.Activate();
                 this.Topmost = true;  // important
-                this.Topmost = false;  // important
-                this.Topmost = true;  // important
+                Thread.Sleep(100);
+                this.Topmost = false; // important
                 this.Focus();         // important
+                this.Hide();
 
                 string dataSaida;
 
@@ -452,21 +473,24 @@ namespace Timesheet
                 }
                 else if (DateTime.Now >= DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59") && elapsed)
                 {
-                    temporizador.Elapsed -= Cronometro;
 
                     var ultimoRegistro = db.ObterUltimoRegistro();
-                    Registro.Sair(DateTime.Now.AddMinutes(-4), ultimoRegistro, this);
+                    Registro.Sair(DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59"), ultimoRegistro, this);
                     Thread.Sleep(1200);
-                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Now.AddMinutes(4), this));
-
-                    temporizador.Elapsed += Cronometro;
+                    db.ListarRegistros().Add(Registro.Entrar(DateTime.Parse(DateTime.Parse(dataSaida).AddDays(1).ToShortDateString() + " 00:00:01"), this));
                 }
 
                 if (!string.IsNullOrEmpty(path))
+                {
                     File.Delete(path);
+
+                }
 
                 db.SalvarAlteracao();
                 db.Dispose();
+
+                temporizador.Elapsed += Cronometro;
+
             }
             catch (IOException ioExc)
             {
