@@ -42,7 +42,7 @@
                             <Image Width="18" Source="/Timesheet;component/Images/excel.jpg" />
                         </StackPanel>
                     </Button>
-                    <Button Width="26" Name="btnExportarTeste" ToolTip="Criar arquivo excel (vcersão beta)">
+                    <Button Width="26" Name="btnExportarTeste" ToolTip="Criar arquivo excel (versão beta)">
                         <StackPanel Orientation="Horizontal">
                             <Image Opacity="1" Width="18" Source="/Timesheet;component/Images/excel.jpg" />
                         </StackPanel>

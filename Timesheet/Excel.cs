@@ -86,7 +86,7 @@ namespace Timesheet
 
                     var rengeC = excelWorksheet.get_Range("C" + indiceInicial, "C" + indiceFinal);
                     rengeC.Merge();
-                    rengeC.Formula = string.Format("=SUM(E{0}:E{1})", indiceInicial, indiceFinal);
+                    rengeC.Formula = string.Format("=SUM(F{0}:F{1})", indiceInicial, indiceFinal);
                     rengeC.NumberFormat = "hh:mm";
                     rengeC.ColumnWidth = 10;
 
