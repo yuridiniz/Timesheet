@@ -55,7 +55,7 @@ namespace Timesheet.Model
 
         public static string Media()
         {
-            var media = (Configuracao.HrsEsperadas - Horas) / (QuantidadeDiasUteis() - DiasTrabalhados);
+            var media = (double)(Configuracao.HrsEsperadas - Horas) / (QuantidadeDiasUteis() - DiasTrabalhados);
 
             if (media < 0)
                 return "00:00";
@@ -76,47 +76,7 @@ namespace Timesheet.Model
                                                    && p.DiaDaSemana != Registro.Semana.Domingo
                                                    && p.DiaDaSemana != Registro.Semana.Sabado)
                                                    .GroupBy(p => p.Dia).Count();
-
             db.Dispose();
-
-            #region Refatoring
-            //using (StreamReader sr = new StreamReader(Configuracao.Path))
-            //{
-            //    var listHoras = new List<double>();
-            //    var linha = sr.ReadLine();
-            //    var linhaAnterior = linha;
-
-            //    //Para sair do cabeçalho
-            //    linha = sr.ReadLine();
-
-            //    if (linha != null)
-            //        DiasTrabalhados = 1;
-
-            //    while (linha != null)
-            //    {
-            //        var dados = linha.Split(';');
-
-            //        if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
-            //        {
-            //            var entrada = Convert.ToDateTime(dados[1]);
-            //            var saida = Convert.ToDateTime(dados[3]);
-
-            //            var totalHrs = (saida - entrada).TotalHours;
-            //            listHoras.Add(totalHrs);
-            //        }
-
-            //        linhaAnterior = linha;
-            //        linha = sr.ReadLine();
-
-            //        if (linha != null)
-            //            if (linhaAnterior.Split(';')[0].Trim() != linha.Split(';')[0].Trim() && !string.IsNullOrWhiteSpace(dados[3]))
-            //                DiasTrabalhados++;
-            //    }
-
-            //    Horas = Convert.ToInt32(listHoras.Sum());
-            //    sr.Close();
-            //}
-            #endregion
         }
     }
 }
