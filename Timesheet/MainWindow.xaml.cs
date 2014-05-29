@@ -139,8 +139,9 @@ namespace Timesheet
                 Dispatcher.Invoke(new Action(() =>
                 {
                     var Horas = new DateTime().AddHours(Pagamento.Horas);
-                    this.lblHrs.Content = FormatarHora(Pagamento.Horas, Horas.Minute); ;
-                    this.lblValor.Content = string.Format("{0:C}", (Convert.ToInt32(Pagamento.Salario()) + Configuracao.ValorHr * (diferenca.TotalSeconds / (60 * 60))));
+                    this.lblHrs.Content = FormatarHora(Pagamento.Horas, Horas.Minute);
+                    this.lblValor.Content = string.Format("{0:C}", Pagamento.Salario());
+                    this.lblMedia.Content = Pagamento.Media();
                 }));
 
                 if (hrsElapsed > Configuracao.TempoInativo * 60)
