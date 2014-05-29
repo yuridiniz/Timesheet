@@ -72,8 +72,10 @@ namespace Timesheet.Model
             RegistroRepositorio db = new RegistroRepositorio();
             var listaRegistros = db.ListarRegistros();
 
-            //Horas = listaRegistros.Sum(p => p.TotalHoras);
-            DiasTrabalhados = listaRegistros.Where(p => p.StatusUsuario != Registro.Usuario.Feriado && p.Dia != DateTime.Now.ToShortDateString()).GroupBy(p => p.Dia).Count();
+            DiasTrabalhados = listaRegistros.Where(p => p.StatusUsuario != Registro.Usuario.Feriado
+                                                   && p.DiaDaSemana != Registro.Semana.Domingo
+                                                   && p.DiaDaSemana != Registro.Semana.Sabado)
+                                                   .GroupBy(p => p.Dia).Count();
 
             db.Dispose();
 
