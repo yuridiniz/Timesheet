@@ -45,6 +45,7 @@ local.properties
 # Build results
 [Dd]ebug/
 [Oo]bj/
+[Oo]bj/[Dd]ebug/
 [Rr]elease/
 *.FileListAbsolute.txt
 *_i.c
