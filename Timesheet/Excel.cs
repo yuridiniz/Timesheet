@@ -11,6 +11,7 @@ using Microsoft.Office.Interop.Excel;
 using Microsoft.Win32;
 using Timesheet.Model;
 using Timesheet.Repositorio;
+using System.Drawing;
 
 namespace Timesheet
 {
@@ -43,65 +44,72 @@ namespace Timesheet
 
                 RegistroRepositorio rep = new RegistroRepositorio();
                 var lista = rep.ListarRegistros();
+
                 Range tudo = (Range)excelWorksheet.get_Range("A1", "Z200");
                 tudo.Font.Name = "Myriad Web Pro";
                 tudo.Font.Size = 12;
                 tudo.HorizontalAlignment = XlHAlign.xlHAlignCenter;
                 tudo.VerticalAlignment = XlVAlign.xlVAlignCenter;
-                foreach (var item in lista)
-                {
-                    var indice = lista.IndexOf(item) + 1;
-                    Range cellEntrada = (Range)excelWorksheet.get_Range("D" + indice, "D" + indice);
-                    Range cellSaida = (Range)excelWorksheet.get_Range("E" + indice, "E" + indice);
-                    var Soma = excelWorksheet.get_Range("F" + indice, "F" + indice);
-
-                    Range cellDesc = (Range)excelWorksheet.get_Range("H" + indice);
-
-                    cellEntrada.NumberFormat = "hh:mm";
-                    cellSaida.NumberFormat = "hh:mm";
-                    Soma.NumberFormat = "hh:mm";
-                    cellEntrada.Value = item.Entrada;
-                    cellSaida.Value = item.Saida;
-
-                    if (!string.IsNullOrEmpty(item.Entrada) && !string.IsNullOrEmpty(item.Saida))
-                        Soma.Formula = string.Format("= E{0}-D{0}", indice);
-                }
 
                 var listaAgrupada = lista.GroupBy(p => p.Dia).ToList();
                 var indiceInicial = 1;
                 var indiceFinal = 0;
+                var indice = indiceInicial;
+
                 foreach (var item in listaAgrupada)
                 {
-                    indiceFinal = indiceInicial + item.Count() - 1;
-                    var rengeA = excelWorksheet.get_Range("A" + indiceInicial, "A" + indiceFinal);
+                    indice = indiceInicial;
+                    if (item.FirstOrDefault().DiaDaSemana == Registro.Semana.Domingo)
+                    {
+                        CriarLinhaTotalizadora(indice, excelWorksheet);
+                        indice++;
+                    }
+
+                    indiceFinal = indice + item.Count() - 1;
+                    var rengeA = excelWorksheet.get_Range("A" + indice, "A" + indiceFinal);
                     rengeA.Merge();
                     rengeA.Value = DateTime.Parse(item.FirstOrDefault().Dia);
-                    rengeA.NumberFormat = "dd/mmm";
-                    rengeA.ColumnWidth = 10;
+                    FormatarRange(rengeA, item.FirstOrDefault().DiaDaSemana, "dd/mmm", 9);
 
-                    var rengeB = excelWorksheet.get_Range("B" + indiceInicial, "B" + indiceFinal);
+                    var rengeB = excelWorksheet.get_Range("B" + indice, "B" + indiceFinal);
                     rengeB.Merge();
                     rengeB.Value = item.FirstOrDefault().TextoSemana;
-                    rengeB.ColumnWidth = 15;
+                    FormatarRange(rengeB, item.FirstOrDefault().DiaDaSemana, "", 15);
 
-                    var rengeC = excelWorksheet.get_Range("C" + indiceInicial, "C" + indiceFinal);
+                    var rengeC = excelWorksheet.get_Range("C" + indice, "C" + indiceFinal);
                     rengeC.Merge();
-                    rengeC.Formula = string.Format("=SUM(F{0}:F{1})", indiceInicial, indiceFinal);
-                    rengeC.NumberFormat = "hh:mm";
-                    rengeC.ColumnWidth = 10;
+                    rengeC.Formula = string.Format("=SUM(F{0}:F{1})", indice, indiceFinal);
+                    FormatarRange(rengeC, item.FirstOrDefault().DiaDaSemana, "hh:mm", 11);
+
+                    foreach (var dados in item.ToList())
+                    {
+                        Range cellEntrada = (Range)excelWorksheet.get_Range("D" + indice, "D" + indice);
+                        Range cellSaida = (Range)excelWorksheet.get_Range("E" + indice, "E" + indice);
+                        var Soma = excelWorksheet.get_Range("F" + indice, "F" + indice);
+                        Range cellProjeto = (Range)excelWorksheet.get_Range("G" + indice);
+                        Range cellDesc = (Range)excelWorksheet.get_Range("H" + indice);
+
+                        FormatarRange(cellEntrada, dados.DiaDaSemana, "hh:mm", 9);
+                        FormatarRange(cellSaida, dados.DiaDaSemana, "hh:mm", 9);
+                        FormatarRange(Soma, dados.DiaDaSemana, "hh:mm", 8);
+                        FormatarRange(cellProjeto, dados.DiaDaSemana, "", 8);
+                        FormatarRange(cellDesc, dados.DiaDaSemana, "hh:mm", 60);
+
+                        cellEntrada.Value = dados.Entrada;
+                        cellSaida.Value = dados.Saida;
+
+                        if (!string.IsNullOrEmpty(dados.Entrada) && !string.IsNullOrEmpty(dados.Saida))
+                            Soma.Formula = string.Format("= E{0}-D{0}", indice);
+
+                        indice++;
+                    }
 
                     indiceInicial = indiceFinal + 1;
                 }
 
+                CriarLinhaTotalizadora(indiceFinal + 1, excelWorksheet);
                 work.SaveAs(timesheetExcel);
-                work.Close();
 
-                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
-                {
-                    Process.GetProcessesByName("EXCEL")[i].Kill();
-                }
-
-                Process.Start(timesheetExcel);
             }
             catch (Exception ex)
             {
@@ -147,7 +155,7 @@ namespace Timesheet
                         var dados = linha.Split(';');
                         if (!string.IsNullOrWhiteSpace(dados[3]) && dados.Length > 4)
                         {
-                            Thread.Sleep(2500);
+                            Thread.Sleep(100);
                             linhaEditavel = ObterLinhaDaData(Convert.ToDateTime(dados[0]), excelWorksheet);
                             if (linhaEditavel == linhaEditavelAnterior)
                                 linhaEditavel++;
@@ -161,7 +169,7 @@ namespace Timesheet
                             {
                                 var entrada = Convert.ToDateTime(dados[1]);
                                 var saida = Convert.ToDateTime(dados[3]);
-                                var desc = dados[5];
+                                var desc = dados.Length == 6 ? dados[5] : "";
 
                                 var totalHrs = (saida - entrada).TotalHours;
 
@@ -186,16 +194,8 @@ namespace Timesheet
                     }
 
                     work.Save();
-                    work.Close();
                     sr.Close();
                 }
-
-                for (var i = 0; i < Process.GetProcessesByName("EXCEL").Length; i++)
-                {
-                    Process.GetProcessesByName("EXCEL")[i].Kill();
-                }
-
-                Process.Start(timesheetExcel);
             }
             catch (Exception ex)
             {
@@ -235,6 +235,62 @@ namespace Timesheet
             }
 
             return startIndex;
+        }
+
+        /// <summary>
+        /// Cria a linha totalizadora no final de cada semana
+        /// </summary>
+        /// <param name="indice"></param>
+        /// <param name="excelWorksheet"></param>
+        private static void CriarLinhaTotalizadora(int indice, Worksheet excelWorksheet)
+        {
+            var rengeTotalDaSemana = excelWorksheet.get_Range("A" + indice, "D" + indice);
+            var rengeValor = excelWorksheet.get_Range("E" + indice, "E" + indice);
+            var Renge1 = excelWorksheet.get_Range("F" + indice, "F" + indice);
+            var Renge2 = excelWorksheet.get_Range("G" + indice, "G" + indice);
+            var Renge3 = excelWorksheet.get_Range("H" + indice, "H" + indice);
+
+            rengeTotalDaSemana.Merge();
+            rengeValor.Merge();
+            FormatarRange(rengeTotalDaSemana, Registro.Semana.Segunda, "", 0, true);
+            FormatarRange(rengeValor, Registro.Semana.Segunda, "hh:mm", 0, true);
+            FormatarRange(Renge1, Registro.Semana.Segunda, "", 0, true);
+            FormatarRange(Renge2, Registro.Semana.Segunda, "", 0, true);
+            FormatarRange(Renge3, Registro.Semana.Segunda, "", 0, true);
+        }
+
+        /// <summary>
+        /// Estiliza a celula
+        /// </summary>
+        /// <param name="range"></param>
+        /// <param name="formato"></param>
+        private static void FormatarRange(Range range, Registro.Semana diaDaSemana, string formato = null, int width = 0, bool isTotalizador = false)
+        {
+             range.Borders[Microsoft.Office.Interop.Excel.XlBordersIndex.xlEdgeBottom].Color = Color.Black.ToArgb();
+            range.Borders[Microsoft.Office.Interop.Excel.XlBordersIndex.xlEdgeTop].Color = Color.Black.ToArgb();
+            range.Borders[Microsoft.Office.Interop.Excel.XlBordersIndex.xlEdgeLeft].Color = Color.Black.ToArgb();
+            range.Borders[Microsoft.Office.Interop.Excel.XlBordersIndex.xlEdgeRight].Color = Color.Black.ToArgb();
+
+            if (!string.IsNullOrEmpty(formato))
+                range.NumberFormat = formato;
+
+            if (width > 0)
+                range.ColumnWidth = width;
+
+            if (diaDaSemana == Registro.Semana.Domingo
+               || diaDaSemana == Registro.Semana.Sabado)
+            {
+                range.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Silver);
+            }
+
+            if (isTotalizador)
+            {
+                range.Font.Bold = true;
+                range.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.FromArgb(Convert.ToInt32("8db4e2", 16)));
+                range.Value = "teste";
+            }
+
+
         }
 
         #endregion
