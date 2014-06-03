@@ -123,17 +123,23 @@ namespace Timesheet
                         FormatarRange(cellDesc1, dados.DiaDaSemana, "hh:mm", 60);
                     }
 
-                    Range cellEntrada = (Range)ExcelWorksheet.get_Range("D" + indice, "D" + indice);
-                    Range cellSaida = (Range)ExcelWorksheet.get_Range("E" + indice, "E" + indice);
-                    var Soma = ExcelWorksheet.get_Range("F" + indice, "F" + indice);
-                    Range cellProjeto = (Range)ExcelWorksheet.get_Range("G" + indice);
-                    Range cellDesc = (Range)ExcelWorksheet.get_Range("H" + indice);
+                    Range cellEntrada = ObterRange("D" + indice, "D" + indice);
+                    Range cellSaida = ObterRange("E" + indice, "E" + indice);
+                    Range Soma = ObterRange("F" + indice, "F" + indice);
+                    Range cellProjeto = ObterRange("G" + indice);
+                    Range cellDesc = ObterRange("H" + indice);
 
                     FormatarRange(cellEntrada, dados.DiaDaSemana, "hh:mm", 9);
                     FormatarRange(cellSaida, dados.DiaDaSemana, "hh:mm", 9);
                     FormatarRange(Soma, dados.DiaDaSemana, "hh:mm", 8);
                     FormatarRange(cellProjeto, dados.DiaDaSemana, "", 8);
                     FormatarRange(cellDesc, dados.DiaDaSemana, "hh:mm", 60);
+
+                    if (!string.IsNullOrEmpty(dados.StatusEntrada) && dados.StatusEntrada.ToUpper() != "OK")
+                        cellEntrada.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.FromArgb(Convert.ToInt32("FFFF00", 16)));
+
+                    if (!string.IsNullOrEmpty(dados.StatusSaida) && dados.StatusSaida.ToUpper() != "OK")
+                        cellSaida.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.FromArgb(Convert.ToInt32("FFFF00", 16)));
 
                     cellEntrada.Value = dados.Entrada;
                     cellSaida.Value = dados.Saida;
@@ -311,8 +317,8 @@ namespace Timesheet
 
             range = ObterRange("D2");
             range.Merge();
-            range.Font.Size = 18;
-            range.NumberFormat = "hh:mm";
+            range.Font.Size = 16;
+            range.NumberFormat = "[h]:mm";
             range.Formula = "= SUM(F5:F150)";
             range.HorizontalAlignment = XlHAlign.xlHAlignCenter;
             range.VerticalAlignment = XlVAlign.xlVAlignCenter;
