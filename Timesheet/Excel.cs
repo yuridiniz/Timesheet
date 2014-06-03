@@ -116,10 +116,10 @@ namespace Timesheet
                         Range cellProjeto1 = ObterRange("G" + (indice + 1));
                         Range cellDesc1 = ObterRange("H" + (indice + 1));
 
-                        FormatarRange(cellEntrada1, dados.DiaDaSemana, "hh:mm", 9);
-                        FormatarRange(cellSaida1, dados.DiaDaSemana, "hh:mm", 9);
-                        FormatarRange(Soma1, dados.DiaDaSemana, "hh:mm", 8);
-                        FormatarRange(cellProjeto1, dados.DiaDaSemana, "", 8);
+                        FormatarRange(cellEntrada1, dados.DiaDaSemana, "hh:mm", 11);
+                        FormatarRange(cellSaida1, dados.DiaDaSemana, "hh:mm", 11);
+                        FormatarRange(Soma1, dados.DiaDaSemana, "hh:mm", 9);
+                        FormatarRange(cellProjeto1, dados.DiaDaSemana, "", 9);
                         FormatarRange(cellDesc1, dados.DiaDaSemana, "hh:mm", 60);
                     }
 
@@ -129,11 +129,12 @@ namespace Timesheet
                     Range cellProjeto = ObterRange("G" + indice);
                     Range cellDesc = ObterRange("H" + indice);
 
-                    FormatarRange(cellEntrada, dados.DiaDaSemana, "hh:mm", 9);
-                    FormatarRange(cellSaida, dados.DiaDaSemana, "hh:mm", 9);
-                    FormatarRange(Soma, dados.DiaDaSemana, "hh:mm", 8);
-                    FormatarRange(cellProjeto, dados.DiaDaSemana, "", 8);
+                    FormatarRange(cellEntrada, dados.DiaDaSemana, "hh:mm", 11);
+                    FormatarRange(cellSaida, dados.DiaDaSemana, "hh:mm", 11);
+                    FormatarRange(Soma, dados.DiaDaSemana, "hh:mm", 9);
+                    FormatarRange(cellProjeto, dados.DiaDaSemana, "", 9);
                     FormatarRange(cellDesc, dados.DiaDaSemana, "hh:mm", 60);
+                    cellDesc.HorizontalAlignment = XlHAlign.xlHAlignLeft;
 
                     if (!string.IsNullOrEmpty(dados.StatusEntrada) && dados.StatusEntrada.ToUpper() != "OK")
                         cellEntrada.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.FromArgb(Convert.ToInt32("FFFF00", 16)));
@@ -386,7 +387,7 @@ namespace Timesheet
             rengeTotalDaSemana.Merge();
             rengeValor.Merge();
             FormatarRange(rengeTotalDaSemana, Registro.Semana.Segunda, "", 0, true);
-            FormatarRange(rengeValor, Registro.Semana.Segunda, "hh:mm", 0, true);
+            FormatarRange(rengeValor, Registro.Semana.Segunda, "[h]:mm", 0, true);
             FormatarRange(Renge1, Registro.Semana.Segunda, "", 0, true);
             FormatarRange(Renge2, Registro.Semana.Segunda, "", 0, true);
             FormatarRange(Renge3, Registro.Semana.Segunda, "", 0, true);
