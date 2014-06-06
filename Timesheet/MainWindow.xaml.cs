@@ -98,6 +98,7 @@ namespace Timesheet
             }
         }
 
+
         #region Eventos
 
         private void GravarBkp(object sender, System.Timers.ElapsedEventArgs e)
@@ -183,10 +184,10 @@ namespace Timesheet
             }
             else
             {
-                temporizador.Elapsed += Cronometro;
                 if (File.Exists(Configuracao.Logs + "SwUser.log"))
                     AlertarSaida("Foi registrado um logout as {0} deseja registrar como uma saída?", "Logout detectado", Configuracao.Logout);
 
+                temporizador.Elapsed += Cronometro;
                 entrada = false;
             }
         }
@@ -431,7 +432,7 @@ namespace Timesheet
         {
             try
             {
-                temporizador.Elapsed -= Cronometro;
+                
 
                 var db = new RegistroRepositorio();
 
@@ -451,6 +452,8 @@ namespace Timesheet
                     dataSaida = File.ReadAllLines(path)[0];
                     data = DateTime.Now;
                 }
+                temporizador.Elapsed -= Cronometro;
+                SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
 
                 this.WindowState = System.Windows.WindowState.Normal;
                 this.ShowInTaskbar = true;
@@ -491,6 +494,7 @@ namespace Timesheet
                 db.Dispose();
 
                 temporizador.Elapsed += Cronometro;
+                SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
 
             }
             catch (IOException ioExc)
