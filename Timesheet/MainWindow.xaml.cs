@@ -436,15 +436,17 @@ namespace Timesheet
 
                 var db = new RegistroRepositorio();
 
+                this.WindowState = System.Windows.WindowState.Normal;
                 this.Activate();
+                this.Topmost = false; // important
                 this.Topmost = true;  // important
                 Thread.Sleep(100);
+                this.ShowInTaskbar = true;
                 this.Topmost = false; // important
                 this.Focus();         // important
                 this.Hide();
 
                 string dataSaida;
-
                 if (string.IsNullOrEmpty(path))
                     dataSaida = data.ToString();
                 else
@@ -454,9 +456,6 @@ namespace Timesheet
                 }
                 temporizador.Elapsed -= Cronometro;
                 SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
-
-                this.WindowState = System.Windows.WindowState.Normal;
-                this.ShowInTaskbar = true;
 
                 var resultado = MessageBox.Show(string.Format(msg, dataSaida), titulo, MessageBoxButton.YesNo, MessageBoxImage.Question);
 
