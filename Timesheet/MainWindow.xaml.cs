@@ -432,8 +432,6 @@ namespace Timesheet
         {
             try
             {
-                
-
                 var db = new RegistroRepositorio();
 
                 this.WindowState = System.Windows.WindowState.Normal;
@@ -473,6 +471,9 @@ namespace Timesheet
                         entrada = Registro.Entrar(DateTime.Now, this);
 
                     db.ListarRegistros().Add(entrada);
+
+                    db.SalvarAlteracao();
+
                 }
                 else if (DateTime.Now >= DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59") && elapsed)
                 {
@@ -481,17 +482,14 @@ namespace Timesheet
                     Registro.Sair(DateTime.Parse(DateTime.Parse(dataSaida).ToShortDateString() + " 23:59:59"), ultimoRegistro, this);
                     Thread.Sleep(1200);
                     db.ListarRegistros().Add(Registro.Entrar(DateTime.Parse(DateTime.Parse(dataSaida).AddDays(1).ToShortDateString() + " 00:00:01"), this));
+                    db.SalvarAlteracao();
                 }
 
                 if (!string.IsNullOrEmpty(path))
-                {
                     File.Delete(path);
 
-                }
-
-                db.SalvarAlteracao();
                 db.Dispose();
-
+                
                 temporizador.Elapsed += Cronometro;
                 SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
 
