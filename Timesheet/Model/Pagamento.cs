@@ -23,6 +23,7 @@ namespace Timesheet.Model
             }
         }
         public static int DiasTrabalhados { get; set; }
+        public static int DiasRestantes { get; set; }
 
         public static int QuantidadeDiasUteis()
         {
@@ -55,7 +56,7 @@ namespace Timesheet.Model
 
         public static string Media()
         {
-            var media = (double)(Configuracao.HrsEsperadas - Horas) / (QuantidadeDiasUteis() - DiasTrabalhados);
+            var media = (double)(Configuracao.HrsEsperadas - Horas) / (DiasRestantes);
 
             if (media < 0)
                 return "00:00";
@@ -71,6 +72,17 @@ namespace Timesheet.Model
         {
             RegistroRepositorio db = new RegistroRepositorio();
             var listaRegistros = db.ListarRegistros();
+
+            var hoje = DateTime.Now.AddDays(1);
+
+            while (hoje.Month != DateTime.Now.AddMonths(1).Month)
+            {
+                if (hoje.DayOfWeek != DayOfWeek.Sunday
+                    && hoje.DayOfWeek != DayOfWeek.Saturday)
+                    DiasRestantes++;
+
+                hoje = hoje.AddDays(1);
+            }
 
             DiasTrabalhados = listaRegistros.Where(p => p.StatusUsuario != Registro.Usuario.Feriado
                                                    && p.DiaDaSemana != Registro.Semana.Domingo
