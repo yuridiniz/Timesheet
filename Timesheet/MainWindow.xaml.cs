@@ -136,10 +136,12 @@ namespace Timesheet
             {
                 var entrada = DateTime.Parse(ultimoRegistro.Dia + " " + ultimoRegistro.Entrada);
                 var diferenca = DateTime.Now - entrada;
+                var hoje = new DateTime().AddHours(Pagamento.Hoje) + diferenca;
 
                 Dispatcher.Invoke(new Action(() =>
                 {
                     var Horas = new DateTime().AddHours(Pagamento.Horas);
+                    this.lblHrsHoje.Content = FormatarHora(hoje.Hour, hoje.Minute);
                     this.lblHrs.Content = FormatarHora(Pagamento.Horas, Horas.Minute);
                     this.lblValor.Content = string.Format("{0:C}", Pagamento.Salario());
                     this.lblMedia.Content = Pagamento.Media();

@@ -22,6 +22,17 @@ namespace Timesheet.Model
                 return listaRegistros.Sum(p => p.TotalHoras);
             }
         }
+
+        public static double Hoje
+        {
+            get
+            {
+                RegistroRepositorio db = new RegistroRepositorio();
+                var listaRegistros = db.ListarRegistros().Where(p => p.Dia == DateTime.Now.ToShortDateString() && p.StatusUsuario != Registro.Usuario.Working ).ToList();
+
+                return listaRegistros.Sum(p => p.TotalHoras);
+            }
+        }
         public static int DiasTrabalhados { get; set; }
         public static int DiasRestantes { get; set; }
 
