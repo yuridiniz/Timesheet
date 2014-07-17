@@ -82,7 +82,7 @@ namespace Timesheet
                     btnEntrada.Click += btnEntrada_Click;
                     btnSair.Click += btnSair_Click;
                     btnExportar.Click += btnExportar_Click;
-                    notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
+                    notifyIcon1.Click += notifyIcon1_Click;
                     btnConfig.Click += btnConfig_Click;
                     this.StateChanged += MainWindow_StateChanged;
 
@@ -106,7 +106,42 @@ namespace Timesheet
             File.WriteAllText(Configuracao.RelatorioLogs, DateTime.Now.ToString());
         }
 
-        private void notifyIcon1_DoubleClick(object sender, EventArgs e)
+        private void notifyIcon1_Click(object sender, EventArgs e)
+        {
+            var evento = (System.Windows.Forms.MouseEventArgs)e;
+            if (evento.Button == Forms.MouseButtons.Left)
+            {
+                AbrirJanela();
+            }
+            else
+            {
+                ExibirTooltipDeDados();
+            }
+            
+        }
+
+        private void ExibirTooltipDeDados()
+        {
+            var db = new RegistroRepositorio();
+            var ultimoRegistro = db.ObterUltimoRegistro();
+
+            if (ultimoRegistro != null)
+            {
+                var entrada = DateTime.Parse(ultimoRegistro.Dia + " " + ultimoRegistro.Entrada);
+                var diferenca = DateTime.Now - entrada;
+                var hoje = new DateTime().AddHours(Pagamento.Hoje) + diferenca;
+
+                var Horas = new DateTime().AddHours(Pagamento.Horas);
+                notifyIcon1.BalloonTipTitle = "Dados";
+                notifyIcon1.BalloonTipText = String.Format("Total:\t\t{0} \nHoje:\t\t{1}\nPagamento:\t{2:C}", FormatarHora(Pagamento.Horas, Horas.Minute), FormatarHora(hoje.Hour, hoje.Minute), Pagamento.Salario());
+                notifyIcon1.ShowBalloonTip(1000);
+            }
+
+            notifyIcon1.BalloonTipTitle = "Timesheet";
+            notifyIcon1.BalloonTipText = "Dado inválido";
+        }
+
+        private void AbrirJanela()
         {
             this.Show();
             this.ShowInTaskbar = true;
@@ -120,9 +155,7 @@ namespace Timesheet
                 this.ShowInTaskbar = false;
                 this.Hide();
 
-                notifyIcon1.BalloonTipTitle = "Timesheet";
-                notifyIcon1.BalloonTipText = "Working in background";
-                notifyIcon1.ShowBalloonTip(1000);
+                ExibirTooltipDeDados();
             }
         }
 
