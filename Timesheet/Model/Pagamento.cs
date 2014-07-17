@@ -67,7 +67,13 @@ namespace Timesheet.Model
 
         public static string Media()
         {
-            var media = (double)(Configuracao.HrsEsperadas - Horas) / (DiasRestantes);
+            RegistroRepositorio db = new RegistroRepositorio();
+            var listaRegistros = db.ListarRegistros();
+
+            listaRegistros = listaRegistros.Where(p => p.Dia != DateTime.Now.ToShortDateString()).ToList();
+            var horas = listaRegistros.Sum(p => p.TotalHoras);
+
+            var media = (double)(Configuracao.HrsEsperadas - horas) / (DiasRestantes);
 
             if (media < 0)
                 return "00:00";
