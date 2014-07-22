@@ -90,7 +90,7 @@ namespace Timesheet.Model
             RegistroRepositorio db = new RegistroRepositorio();
             var listaRegistros = db.ListarRegistros();
 
-            var hoje = DateTime.Now.AddDays(1);
+            var hoje = DateTime.Now;
 
             while (hoje.Month != DateTime.Now.AddMonths(1).Month)
             {
