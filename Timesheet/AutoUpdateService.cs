@@ -17,15 +17,46 @@ namespace Timesheet
         private static WebClient wc;
         private static string Json = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/release.json";
         private static string Exe = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/Timesheet.exe";
+        private static string Update = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/Update.exe";
+
         public static void Start()
         {
             wc = new WebClient();
-
             Random random = new Random();
             string url = Json + "?random=" + random.Next().ToString();
+            string urlUpdate = Update + "?random=" + random.Next().ToString();
+            
 
-            wc.DownloadStringAsync(new Uri(url));
-            wc.DownloadStringCompleted += VerificarVersao;
+            if (!File.Exists(Configuracao.Diretorio + "Update.exe"))
+            {
+                wc.DownloadDataAsync(new Uri(urlUpdate));
+                wc.DownloadDataCompleted += BaixarAtualizador;
+
+            }
+            else
+            {
+                
+                wc.DownloadStringAsync(new Uri(url));
+                wc.DownloadStringCompleted += VerificarVersao;
+            }
+
+        }
+
+        private static void BaixarAtualizador(object sender, DownloadDataCompletedEventArgs e)
+        {
+            try
+            {
+                Random random = new Random();
+                string url = Json + "?random=" + random.Next().ToString();
+
+                File.WriteAllBytes(Configuracao.Diretorio + "Update.exe", e.Result);
+                wc.DownloadStringAsync(new Uri(url));
+                wc.DownloadStringCompleted += VerificarVersao;
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         private static void BaixarVersao()
@@ -54,16 +85,14 @@ namespace Timesheet
             {
                 
             }
-            
         }
-
         
         private static void DownloadConcluido(object sender, DownloadDataCompletedEventArgs e)
         {
             try
             {
-                File.WriteAllBytes(Configuracao.Diretorio + "Timesheet.exe", e.Result);
-                Process.Start(Configuracao.Diretorio + "Update.exe");
+                File.WriteAllBytes(Configuracao.Diretorio + "Timeshee.exe", e.Result);
+                Process.Start(Configuracao.Diretorio + "Update.exe", Environment.CurrentDirectory);
             }
             catch (Exception)
             {
@@ -86,9 +115,7 @@ namespace Timesheet
                         str.AppendLine("- " + descricao);
                 }
                 else
-                {
                     break;
-                }
             }
 
             var resultado = MessageBox.Show(str.ToString(), "Nova versão desenvolvida", MessageBoxButton.YesNo, MessageBoxImage.Question);
