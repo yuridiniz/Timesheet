@@ -25,17 +25,14 @@ namespace Timesheet
             Random random = new Random();
             string url = Json + "?random=" + random.Next().ToString();
             string urlUpdate = Update + "?random=" + random.Next().ToString();
-            
 
             if (!File.Exists(Configuracao.Diretorio + "Update.exe"))
             {
                 wc.DownloadDataAsync(new Uri(urlUpdate));
                 wc.DownloadDataCompleted += BaixarAtualizador;
-
             }
             else
             {
-                
                 wc.DownloadStringAsync(new Uri(url));
                 wc.DownloadStringCompleted += VerificarVersao;
             }
@@ -65,6 +62,7 @@ namespace Timesheet
             string url = Exe + "?random=" + random.Next().ToString();
 
             wc.DownloadDataAsync(new Uri(url));
+            wc.DownloadDataCompleted -= BaixarAtualizador;
             wc.DownloadDataCompleted += DownloadConcluido;
         }
 
@@ -91,8 +89,9 @@ namespace Timesheet
         {
             try
             {
-                File.WriteAllBytes(Configuracao.Diretorio + "Timeshee.exe", e.Result);
-                Process.Start(Configuracao.Diretorio + "Update.exe", Environment.CurrentDirectory);
+                File.WriteAllBytes(Configuracao.Diretorio + "TimesheetNew.exe", e.Result);
+                Process.Start(Configuracao.Diretorio + "Update.exe", Environment.CurrentDirectory + "&" + Configuracao.Diretorio);
+                Process.GetCurrentProcess().Kill();
             }
             catch (Exception)
             {

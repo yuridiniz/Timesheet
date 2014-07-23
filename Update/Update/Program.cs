@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Update
 {
+    //Substitui os arquivos
     class Program
     {
         static void Main(string[] args)
         {
-            File.Delete(args[0] + "\\Timesheet.exe");
-            File.Move(Environment.CurrentDirectory + "\\TimesheetNew.exe", args[0] + "\\Timesheet.exe");
+            var diretorio = args[0].Split('&');
+
+            while (!File.Exists(diretorio[1] + "\\TimesheetNew.exe")) ;
+
+            File.Delete(diretorio[0] + "\\Timesheet.exe");
+            File.Move(diretorio[1] + "\\TimesheetNew.exe", diretorio[0] + "\\Timesheet.exe");
+
+            Process.Start(diretorio[0] + "\\Timesheet.exe");
         }
     }
 }
