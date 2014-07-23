@@ -17,6 +17,7 @@ namespace Timesheet.Model
         public static bool ExibirValor { get; set; }
         public static int TempoInativo { get; set; }
 
+        public static string Versao = "0.7.2";
         public static string Diretorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/";
         public static string Logs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/";
         public static string DiretorioBkp = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Bkp/";

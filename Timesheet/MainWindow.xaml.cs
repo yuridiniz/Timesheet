@@ -44,6 +44,7 @@ namespace Timesheet
 
             try
             {
+                AutoUpdateService.Start();
                 var qtd = Process.GetProcessesByName("Timesheet").Count();
                 if (qtd >= 2)
                 {
