@@ -1,4 +1,11 @@
 [{
+	"Versao" : "0.7.3",
+	"Descricao" : [
+		"Cadastro de dias não trabalhados caso a maquina se mantanha ligada por mais de 42 horas",
+		"Correção de erro que não registrava saída",
+		"Abertura da janela de atividades automaticamente"
+	]
+},{
 	"Versao" : "0.7.2",
 	"Descricao" : [
 		"Exibição de dados ao clicar com o botão direito do mouse no icone na barra de tarefas",
