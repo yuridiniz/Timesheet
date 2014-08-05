@@ -17,7 +17,7 @@ namespace Timesheet.Model
         public static bool ExibirValor { get; set; }
         public static int TempoInativo { get; set; }
 
-        public static string Versao = "0.7.2";
+        public static string Versao = "0.7.3";
         public static string Diretorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/";
         public static string Logs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/";
         public static string DiretorioBkp = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Bkp/";
@@ -27,7 +27,7 @@ namespace Timesheet.Model
         public static string Relatorio = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Relatorio.txt";
         public static string Shutdown = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/ShutUser.log";
         public static string Logout = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/SwUser.log";
-        public static string RelatorioLogs { get { return string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Bkp/Log_{0}.log",DateTime.Now.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture)); } }
+        public static string RelatorioLogs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Bkp/Log_saida.log";
 
         public static string ConfigFile = @"# Dados para pagamento;;HORA = 176;VALOR_HORA = 30;;QTD_FERIADOS = 0;;
                                             # Dados para exibição;;EXIBIR_PRETENCAO = true;EXIBIR_VALOR_ATUAL = true;;

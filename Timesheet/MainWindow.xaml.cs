@@ -81,7 +81,7 @@ namespace Timesheet
                     timerAtividade.Start();
 
                     bkpRegistro.Interval = 1000 * 60 * 1;
-                    bkpRegistro.Elapsed += GravarBkp;
+                    bkpRegistro.Elapsed += GravarLogSainda;
                     bkpRegistro.Start();
 
                     SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
@@ -105,6 +105,10 @@ namespace Timesheet
             }
         }
 
+
+        #region Eventos
+
+
         private void TimerAtividade(object sender, System.Timers.ElapsedEventArgs e)
         {
             var db = new RegistroRepositorio();
@@ -127,13 +131,9 @@ namespace Timesheet
 
                 }));
             }
-
         }
 
-
-        #region Eventos
-
-        private void GravarBkp(object sender, System.Timers.ElapsedEventArgs e)
+        private void GravarLogSainda(object sender, System.Timers.ElapsedEventArgs e)
         {
             File.WriteAllText(Configuracao.RelatorioLogs, DateTime.Now.ToString());
         }
@@ -388,6 +388,9 @@ namespace Timesheet
             if (File.Exists(Configuracao.Shutdown))
                 AlertarSaida("O sistema foi desligado as {0} deseja registrar como uma saída?", "Shutdown detectado", Configuracao.Shutdown);
 
+            else if(AnalisarLogSaida())
+                AlertarSaida("O Sistema Timesheet ficou desativado desde {0} deseja registrar como uma saída?", "Incativadade do timesheet detectado", Configuracao.RelatorioLogs);
+
             else if (File.Exists(Configuracao.Logout))
                 AlertarSaida("Foi registrado um logout as {0} deseja registrar como uma saída?", "Logout detectado", Configuracao.Logout);
 
@@ -418,6 +421,17 @@ namespace Timesheet
             }
 
             db.Dispose();
+        }
+
+        private bool AnalisarLogSaida()
+        {
+            var texto = File.ReadAllText(Configuracao.RelatorioLogs);
+            DateTime data;
+
+            if (DateTime.TryParse(texto, out data))
+                return data.AddHours(1) < DateTime.Now;
+
+            return false;
         }
 
         /// <summary>
