@@ -67,8 +67,6 @@ namespace Timesheet
                 timerAtividade = new System.Timers.Timer();
                 notifyIcon1 = new Forms.NotifyIcon();
 
-                new CadastrarAtividade().ShowDialog();
-
                 notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
                 notifyIcon1.Visible = true;
                 notifyIcon1.Text = "Timesheet";
@@ -110,7 +108,7 @@ namespace Timesheet
             }
             catch (IOException e)
             {
-                MessageBox.Show("O Sistema foi instalado!");
+                MessageBox.Show("O sistema sofreu uma falha, porfavor inicie novamente!");
                 this.Close();
             }
             catch (Exception e)
