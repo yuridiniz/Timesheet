@@ -29,9 +29,7 @@ namespace Timesheet.Model
         public static string Logout = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Logs/SwUser.log";
         public static string RelatorioLogs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Timesheet/Bkp/Log_saida.log";
 
-        public static string ConfigFile = @"# Dados para pagamento;;HORA = 176;VALOR_HORA = 30;;QTD_FERIADOS = 0;;
-                                            # Dados para exibição;;EXIBIR_PRETENCAO = true;EXIBIR_VALOR_ATUAL = true;;
-                                            # Dados de registro;;# tempo em minutos para que seja registrado uma saída quando o sistema estiver inativo;TEMPO_INATIVO = 20";
+        public static string ConfigFile = "# Dados para pagamento;;HORA = 176;VALOR_HORA = 30;QTD_FERIADOS = 0;;# Dados para exibição;;EXIBIR_PRETENCAO = true;EXIBIR_VALOR_ATUAL = true;;# Dados de registro;;# tempo em minutos para que seja registrado uma saída quando o sistema estiver inativo;TEMPO_INATIVO = 20";
 
         public static void CarregarConfiguracoes()
         {

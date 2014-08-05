@@ -43,65 +43,82 @@ namespace Timesheet
         {
             InitializeComponent();
 
+            var qtd = Process.GetProcessesByName("Timesheet").Count();
+            if (qtd >= 2)
+            {
+                EventosPorProcesso.ExibirProcesso(Process.GetProcessesByName("Timesheet")[1].MainWindowHandle);
+                this.Close();
+            }
+            else
+            {
+                IniciaServicos(0);
+            }
+            
+        }
+
+        private void IniciaServicos(int tentativa)
+        {
             try
             {
                 AutoUpdateService.Start();
-                var qtd = Process.GetProcessesByName("Timesheet").Count();
-                if (qtd >= 2)
-                {
-                    EventosPorProcesso.ExibirProcesso(Process.GetProcessesByName("Timesheet")[1].MainWindowHandle);
-                    this.Close();
-                }
-                else
-                {
-                    temporizador = new System.Timers.Timer();
-                    bkpRegistro = new System.Timers.Timer();
-                    timerAtividade = new System.Timers.Timer();
-                    notifyIcon1 = new Forms.NotifyIcon();
 
-                    notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
-                    notifyIcon1.Visible = true;
-                    notifyIcon1.Text = "Timesheet";
+                temporizador = new System.Timers.Timer();
+                bkpRegistro = new System.Timers.Timer();
+                timerAtividade = new System.Timers.Timer();
+                notifyIcon1 = new Forms.NotifyIcon();
 
-                    RegistrarStartup();
-                    IniciarArquivos();
+                new CadastrarAtividade().ShowDialog();
 
-                    Configuracao.CarregarConfiguracoes();
-                    Pagamento.CarregarDadosTimesheet();
+                notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
+                notifyIcon1.Visible = true;
+                notifyIcon1.Text = "Timesheet";
 
-                    VerificarSaida();
-                    ExibirValores();
+                RegistrarStartup();
+                IniciarArquivos();
 
-                    temporizador.Interval = 1000;
-                    temporizador.Elapsed += Cronometro;
-                    temporizador.Start();
+                Configuracao.CarregarConfiguracoes();
+                Pagamento.CarregarDadosTimesheet();
 
-                    timerAtividade.Interval = 1000 * 60 * 60 * 3;
-                    timerAtividade.Elapsed += TimerAtividade;
-                    timerAtividade.Start();
+                VerificarSaida();
+                ExibirValores();
 
-                    bkpRegistro.Interval = 1000 * 60 * 1;
-                    bkpRegistro.Elapsed += GravarLogSainda;
-                    bkpRegistro.Start();
+                temporizador.Interval = 1000;
+                temporizador.Elapsed += Cronometro;
+                temporizador.Start();
 
-                    SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
-                    SystemEvents.SessionEnding += SystemEvents_SessionEnding;
-                    btnEntrada.Click += btnEntrada_Click;
-                    btnSair.Click += btnSair_Click;
-                    btnExportar.Click += btnExportar_Click;
-                    notifyIcon1.Click += notifyIcon1_Click;
-                    btnConfig.Click += btnConfig_Click;
-                    this.StateChanged += MainWindow_StateChanged;
+                timerAtividade.Interval = 1000*60*60*3;
+                timerAtividade.Elapsed += TimerAtividade;
+                timerAtividade.Start();
 
-                    btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
-                    btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
-                    bar.MouseDown += (e, s) => { this.DragMove(); };
-                    btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
-                }
+                bkpRegistro.Interval = 1000*60*1;
+                bkpRegistro.Elapsed += GravarLogSainda;
+                bkpRegistro.Start();
+
+                SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+                SystemEvents.SessionEnding += SystemEvents_SessionEnding;
+                btnEntrada.Click += btnEntrada_Click;
+                btnSair.Click += btnSair_Click;
+                btnExportar.Click += btnExportar_Click;
+                notifyIcon1.Click += notifyIcon1_Click;
+                btnConfig.Click += btnConfig_Click;
+                this.StateChanged += MainWindow_StateChanged;
+
+                btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
+                btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
+                bar.MouseDown += (e, s) => { this.DragMove(); };
+                btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
+            }
+            catch (IOException e)
+            {
+                MessageBox.Show("O Sistema foi instalado!");
+                this.Close();
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message);
+                if (tentativa > 5)
+                    MessageBox.Show(e.Message);
+                else
+                    IniciaServicos(++tentativa);
             }
         }
 
@@ -352,7 +369,7 @@ namespace Timesheet
             if (!Directory.Exists(Configuracao.PathConfig))
             {
                 Directory.CreateDirectory(Configuracao.PathConfig);
-                File.WriteAllText(Configuracao.Config, Configuracao.ConfigFile);
+                File.WriteAllLines(Configuracao.Config, Configuracao.ConfigFile.Split(';'));
             }
 
             if (File.Exists(Configuracao.Relatorio))
@@ -399,12 +416,11 @@ namespace Timesheet
                 this.Activate();
                 this.Topmost = true;  // important
                 Thread.Sleep(100);
-                this.Topmost = false; // important
                 this.Focus();         // important
                 this.Hide();
 
                 var resultado = MessageBox.Show("Registrar entrada?", "Iniciando mês", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
+                this.Topmost = false; // important
                 this.Show();
 
                 if (resultado == MessageBoxResult.Yes)
@@ -527,7 +543,6 @@ namespace Timesheet
                 this.Topmost = true;  // important
                 Thread.Sleep(100);
                 this.ShowInTaskbar = true;
-                this.Topmost = false; // important
                 this.Focus();         // important
                 this.Hide();
 
@@ -544,6 +559,7 @@ namespace Timesheet
 
                 var resultado = MessageBox.Show(string.Format(msg, dataSaida), titulo, MessageBoxButton.YesNo, MessageBoxImage.Question);
 
+                this.Topmost = false; // important
                 this.Show();
 
                 if (resultado == MessageBoxResult.Yes)
