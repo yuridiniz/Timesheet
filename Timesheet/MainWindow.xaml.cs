@@ -35,6 +35,7 @@ namespace Timesheet
         bool entrada = false;
         System.Timers.Timer temporizador;
         System.Timers.Timer bkpRegistro;
+        System.Timers.Timer timerAtividade;
         public Forms.NotifyIcon notifyIcon1;
         bool Notificando = false;
 
@@ -55,6 +56,7 @@ namespace Timesheet
                 {
                     temporizador = new System.Timers.Timer();
                     bkpRegistro = new System.Timers.Timer();
+                    timerAtividade = new System.Timers.Timer();
                     notifyIcon1 = new Forms.NotifyIcon();
 
                     notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
@@ -74,7 +76,11 @@ namespace Timesheet
                     temporizador.Elapsed += Cronometro;
                     temporizador.Start();
 
-                    bkpRegistro.Interval = 1000 * 60 * 5;
+                    timerAtividade.Interval = 1000 * 60 * 60 * 3;
+                    timerAtividade.Elapsed += TimerAtividade;
+                    timerAtividade.Start();
+
+                    bkpRegistro.Interval = 1000 * 60 * 1;
                     bkpRegistro.Elapsed += GravarBkp;
                     bkpRegistro.Start();
 
@@ -97,6 +103,31 @@ namespace Timesheet
             {
                 MessageBox.Show(e.Message);
             }
+        }
+
+        private void TimerAtividade(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            var db = new RegistroRepositorio();
+            var hrsElapsed = Inactivity.GetLastInputTime();
+            var ultimoRegistro = db.ObterUltimoRegistro();
+
+            if (ultimoRegistro != null && ultimoRegistro.StatusUsuario == Registro.Usuario.Working)
+            {
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    var desktopWorkingArea = System.Windows.SystemParameters.WorkArea;
+
+                    var atv = new CadastrarAtividade();
+                    atv.Topmost = true;
+                    atv.WindowStartupLocation = WindowStartupLocation.Manual;
+                    atv.Left = desktopWorkingArea.Right - atv.Width;
+                    atv.Top = desktopWorkingArea.Bottom - atv.Height;
+                    atv.ShowInTaskbar = false;
+                    atv.ShowDialog();
+
+                }));
+            }
+
         }
 
 
@@ -375,6 +406,12 @@ namespace Timesheet
 
                 if (resultado == MessageBoxResult.Yes)
                 {
+
+                    var ultimaLinha = db.ObterUltimoRegistro();
+
+                    if (ultimaLinha != null)
+                        RegistrarFeriado(ultimaLinha.Dia);
+
                     db.ListarRegistros().Add(Registro.Entrar(DateTime.Now, this));
                     db.SalvarAlteracao();
                 }
