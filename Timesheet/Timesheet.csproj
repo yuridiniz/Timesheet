@@ -33,6 +33,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Images\clock-icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
@@ -62,7 +65,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AutoUpdateService.cs" />
+    <Compile Include="Service\AtividadeService.cs" />
+    <Compile Include="Service\AutoUpdateService.cs" />
     <Compile Include="CadastrarAtividade.xaml.cs">
       <DependentUpon>CadastrarAtividade.xaml</DependentUpon>
     </Compile>
@@ -73,6 +77,8 @@
     <Compile Include="Model\Log.cs" />
     <Compile Include="Model\Update.cs" />
     <Compile Include="Repositorio\RelatorioRepositorio.cs" />
+    <Compile Include="Service\LogSaidaService.cs" />
+    <Compile Include="Service\ServiceBase.cs" />
     <Compile Include="UserActivityHook.cs" />
     <Page Include="CadastrarAtividade.xaml">
       <SubType>Designer</SubType>
@@ -129,6 +135,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Extends\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\clock-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\clock-icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

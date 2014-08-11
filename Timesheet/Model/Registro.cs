@@ -107,9 +107,9 @@ namespace Timesheet.Model
 
             registro.StatusEntrada = "OK";
 
-            ctx.notifyIcon1.BalloonTipTitle = "Entrada registrada";
-            ctx.notifyIcon1.BalloonTipText = registro.Entrada;
-            ctx.notifyIcon1.ShowBalloonTip(3000);
+            ctx.IconeNotificacao.BalloonTipTitle = "Entrada registrada";
+            ctx.IconeNotificacao.BalloonTipText = registro.Entrada;
+            ctx.IconeNotificacao.ShowBalloonTip(3000);
 
             return registro;
         }
@@ -123,9 +123,9 @@ namespace Timesheet.Model
                 
             registro.StatusSaida = "OK";
 
-            ctx.notifyIcon1.BalloonTipTitle = "Saída registrada";
-            ctx.notifyIcon1.BalloonTipText = registro.Saida;
-            ctx.notifyIcon1.ShowBalloonTip(3000);
+            ctx.IconeNotificacao.BalloonTipTitle = "Saída registrada";
+            ctx.IconeNotificacao.BalloonTipText = registro.Saida;
+            ctx.IconeNotificacao.ShowBalloonTip(3000);
 
             return registro;
         }

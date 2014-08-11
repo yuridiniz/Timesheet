@@ -10,24 +10,25 @@ using System.Web.Script.Serialization;
 using System.Windows;
 using Timesheet.Model;
 
-namespace Timesheet
+namespace Timesheet.Service
 {
-    public class AutoUpdateService
+    /// <summary>
+    /// Serviço de autoupdate do timesheet
+    /// </summary>
+    public class AutoUpdateService : BaseService
     {
-        private static WebClient wc;
-        private static string Json = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/release.json";
-        private static string Exe = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/Timesheet.exe";
-        private static string Update = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/Update.exe";
+        private WebClient wc;
+        private string Json = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/release.json";
+        private string Exe = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/Timesheet.exe";
+        private string Update = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/Update.exe";
 
-        public static void Start()
+        public AutoUpdateService()
+            : base(60)
         {
-            System.Timers.Timer temporizador = new System.Timers.Timer();
-            temporizador.Interval = (1000 * 60) * 10;
-            temporizador.Elapsed += AutoCheck;
-            temporizador.Start();
+
         }
 
-        private static void AutoCheck(object sender, System.Timers.ElapsedEventArgs e)
+        protected override void Acao(object sender, System.Timers.ElapsedEventArgs e)
         {
             wc = new WebClient();
             Random random = new Random();
@@ -46,7 +47,7 @@ namespace Timesheet
             }
         }
 
-        private static void BaixarAtualizador(object sender, DownloadDataCompletedEventArgs e)
+        private void BaixarAtualizador(object sender, DownloadDataCompletedEventArgs e)
         {
             try
             {
@@ -63,7 +64,7 @@ namespace Timesheet
             }
         }
 
-        private static void BaixarVersao()
+        private void BaixarVersao()
         {
             Random random = new Random();
             string url = Exe + "?random=" + random.Next().ToString();
@@ -73,7 +74,7 @@ namespace Timesheet
             wc.DownloadDataCompleted += DownloadConcluido;
         }
 
-        private static void VerificarVersao(object sender, DownloadStringCompletedEventArgs e)
+        private void VerificarVersao(object sender, DownloadStringCompletedEventArgs e)
         {
             try
             {
@@ -92,7 +93,7 @@ namespace Timesheet
             }
         }
         
-        private static void DownloadConcluido(object sender, DownloadDataCompletedEventArgs e)
+        private void DownloadConcluido(object sender, DownloadDataCompletedEventArgs e)
         {
             try
             {
@@ -107,7 +108,7 @@ namespace Timesheet
             
         }
 
-        private static bool ExibirDados(List<Update> versoes)
+        private bool ExibirDados(List<Update> versoes)
         {
             StringBuilder str = new StringBuilder();
             str.AppendLine(string.Format("Nova verão desenvolvida: {0} \nVersão atual: {1} \n", versoes.First().Versao, Configuracao.Versao));

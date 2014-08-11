@@ -24,6 +24,7 @@ using Forms = System.Windows.Forms;
 using System.Drawing;
 using Timesheet.ModelContext;
 using Timesheet.Repositorio;
+using Timesheet.Service;
 
 namespace Timesheet
 {
@@ -32,49 +33,66 @@ namespace Timesheet
     /// </summary>
     public partial class MainWindow : Window
     {
-        bool entrada = false;
-        System.Timers.Timer temporizador;
-        System.Timers.Timer bkpRegistro;
-        System.Timers.Timer timerAtividade;
-        public Forms.NotifyIcon notifyIcon1;
-        CadastrarAtividade CadastroAtividade;
-        bool Notificando = false;
+        public bool entrada = false;
+        public System.Timers.Timer temporizador;
+        public Forms.NotifyIcon IconeNotificacao;
+        public bool Notificando = false;
 
         public MainWindow()
         {
             InitializeComponent();
+            AdministrarProcessosTimesheet();
 
-            var qtd = Process.GetProcessesByName("Timesheet").Count();
-            if (qtd >= 2)
+            //Instancias
+            IconeNotificacao = new Forms.NotifyIcon();
+
+            //Eventos
+            btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
+            bar.MouseDown += (e, s) => { this.DragMove(); };
+            btnConfig.Click += (e, s) => { System.Diagnostics.Process.Start(Configuracao.Diretorio); };
+            btnExportar.Click += (e, s) => { Task.Run(() => Excel.ExportarExcel()); };
+            btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
+            btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
+            IconeNotificacao.Click += IconeNotificacao_Click;
+            SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+            SystemEvents.SessionEnding += SystemEvents_SessionEnding;
+            this.StateChanged += MainWindow_StateChanged;
+
+            //Propriedades
+            IconeNotificacao.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/Images/clock-icon.ico")).Stream);
+
+            //Serviços
+            new AutoUpdateService();
+            new AtividadeService();
+            new LogSaidaService();
+
+            //Esse timer é para ser um serviço com acesso a VIEW
+            temporizador = new System.Timers.Timer();
+            temporizador.Interval = 1000;
+            temporizador.Elapsed += Cronometro;
+            temporizador.Start();
+
+        }
+
+        /// <summary>
+        /// Visualiza se existe outros processos do timesheet, caso exista finaliza essa e mantem a antiga, caso não exista
+        /// inicia os processos
+        /// </summary>
+        private void AdministrarProcessosTimesheet()
+        {
+            if (Process.GetProcessesByName("Timesheet").Count() >= 2)
             {
                 EventosPorProcesso.ExibirProcesso(Process.GetProcessesByName("Timesheet")[1].MainWindowHandle);
                 this.Close();
             }
             else
-            {
-                IniciaServicos(0);
-            }
-            
+                IniciaProcesso(0);
         }
 
-        private void IniciaServicos(int tentativa)
+        private void IniciaProcesso(int tentativa)
         {
             try
             {
-                AutoUpdateService.Start();
-
-                btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
-                bar.MouseDown += (e, s) => { this.DragMove(); };
-
-                temporizador = new System.Timers.Timer();
-                bkpRegistro = new System.Timers.Timer();
-                timerAtividade = new System.Timers.Timer();
-                notifyIcon1 = new Forms.NotifyIcon();
-
-                notifyIcon1.Icon = new Icon(SystemIcons.Information, 40, 40);
-                notifyIcon1.Visible = true;
-                notifyIcon1.Text = "Timesheet";
-
                 RegistrarStartup();
                 IniciarArquivos();
 
@@ -84,29 +102,6 @@ namespace Timesheet
                 VerificarSaida();
                 ExibirValores();
 
-                temporizador.Interval = 1000;
-                temporizador.Elapsed += Cronometro;
-                temporizador.Start();
-
-                timerAtividade.Interval = 1000*60*60*3;
-                timerAtividade.Elapsed += TimerAtividade;
-                timerAtividade.Start();
-
-                bkpRegistro.Interval = 1000*60*1;
-                bkpRegistro.Elapsed += GravarLogSainda;
-                bkpRegistro.Start();
-
-                SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
-                SystemEvents.SessionEnding += SystemEvents_SessionEnding;
-                btnEntrada.Click += btnEntrada_Click;
-                btnSair.Click += btnSair_Click;
-                btnExportar.Click += btnExportar_Click;
-                notifyIcon1.Click += notifyIcon1_Click;
-                btnConfig.Click += btnConfig_Click;
-                this.StateChanged += MainWindow_StateChanged;
-
-                btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
-                btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
             }
             catch (IOException e)
             {
@@ -118,58 +113,17 @@ namespace Timesheet
                 if (tentativa > 5)
                     MessageBox.Show(e.Message);
                 else
-                    IniciaServicos(++tentativa);
+                    IniciaProcesso(++tentativa);
             }
         }
 
-
-        #region Eventos
-
-
-        private void TimerAtividade(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            var db = new RegistroRepositorio();
-            var hrsElapsed = Inactivity.GetLastInputTime();
-            var ultimoRegistro = db.ObterUltimoRegistro();
-
-            if (ultimoRegistro != null && ultimoRegistro.StatusUsuario == Registro.Usuario.Working)
-            {
-                Dispatcher.Invoke(new Action(() =>
-                {
-                    var desktopWorkingArea = System.Windows.SystemParameters.WorkArea;
-
-                    if (CadastroAtividade != null)
-                        CadastroAtividade.Close();
-
-                    CadastroAtividade = new CadastrarAtividade();
-                    CadastroAtividade.Topmost = true;
-                    CadastroAtividade.WindowStartupLocation = WindowStartupLocation.Manual;
-                    CadastroAtividade.Left = desktopWorkingArea.Right - CadastroAtividade.Width;
-                    CadastroAtividade.Top = desktopWorkingArea.Bottom - CadastroAtividade.Height;
-                    CadastroAtividade.ShowInTaskbar = false;
-                    CadastroAtividade.ShowDialog();
-
-                }));
-            }
-        }
-
-        private void GravarLogSainda(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            File.WriteAllText(Configuracao.RelatorioLogs, DateTime.Now.ToString());
-        }
-
-        private void notifyIcon1_Click(object sender, EventArgs e)
+        private void IconeNotificacao_Click(object sender, EventArgs e)
         {
             var evento = (System.Windows.Forms.MouseEventArgs)e;
             if (evento.Button == Forms.MouseButtons.Left)
-            {
                 AbrirJanela();
-            }
             else
-            {
                 ExibirTooltipDeDados();
-            }
-            
         }
 
         private void ExibirTooltipDeDados()
@@ -184,13 +138,13 @@ namespace Timesheet
                 var hoje = new DateTime().AddHours(Pagamento.Hoje) + diferenca;
 
                 var Horas = new DateTime().AddHours(Pagamento.Horas);
-                notifyIcon1.BalloonTipTitle = "Dados";
-                notifyIcon1.BalloonTipText = String.Format("Total:\t\t{0} \nHoje:\t\t{1}\nPagamento:\t{2:C}", FormatarHora(Pagamento.Horas, Horas.Minute), FormatarHora(hoje.Hour, hoje.Minute), Pagamento.Salario());
-                notifyIcon1.ShowBalloonTip(1000);
+                IconeNotificacao.BalloonTipTitle = "Dados";
+                IconeNotificacao.BalloonTipText = String.Format("Total:\t\t{0} \nHoje:\t\t{1}\nPagamento:\t{2:C}", FormatarHora(Pagamento.Horas, Horas.Minute), FormatarHora(hoje.Hour, hoje.Minute), Pagamento.Salario());
+                IconeNotificacao.ShowBalloonTip(1000);
             }
 
-            notifyIcon1.BalloonTipTitle = "Timesheet";
-            notifyIcon1.BalloonTipText = "Dado inválido";
+            IconeNotificacao.BalloonTipTitle = "Timesheet";
+            IconeNotificacao.BalloonTipText = "Dado inválido";
         }
 
         private void AbrirJanela()
@@ -284,48 +238,7 @@ namespace Timesheet
             File.WriteAllText(Configuracao.Logs + "ShutUser.log", DateTime.Now.ToString());
             entrada = true;
         }
-
-        private void btnEntrada_Click(object s, EventArgs e)
-        {
-            using (var db = new RegistroRepositorio())
-            {
-                var novoRegistro = Registro.Entrar(DateTime.Now, this);
-                db.ListarRegistros().Add(novoRegistro);
-                db.SalvarAlteracao();
-
-                btnEntrada.IsEnabled = false;
-                btnSair.IsEnabled = true;
-            }
-            
-        }
-
-        private void btnSair_Click(object s, EventArgs e)
-        {
-            using (var db = new RegistroRepositorio())
-            {
-                var ultimoRegistro = db.ObterUltimoRegistro();
-                Registro.Sair(DateTime.Now, ultimoRegistro, this);
-
-                db.SalvarAlteracao();
-
-                btnEntrada.IsEnabled = true;
-                btnSair.IsEnabled = false;
-            }
-        }
-
-        private void btnExportar_Click(object s, EventArgs e)
-        {
-            Task.Run(() => Excel.ExportarExcel());
-        }
-
-        private void btnConfig_Click(object s, EventArgs e)
-        {
-            System.Diagnostics.Process.Start(Configuracao.Diretorio);
-        }
-
-        #endregion
-
-        #region Métodos Gerais
+      
         /// <summary>
         /// Registra a aplicação para iniciar junto com o windows
         /// </summary>
@@ -374,28 +287,6 @@ namespace Timesheet
                 Directory.CreateDirectory(Configuracao.PathConfig);
                 File.WriteAllLines(Configuracao.Config, Configuracao.ConfigFile.Split(';'));
             }
-
-            if (File.Exists(Configuracao.Relatorio))
-            {
-                try
-                {
-                    var db = new RegistroRepositorio();
-
-                    var ultimaLinha = db.ObterUltimoRegistro();
-
-                    if (ultimaLinha != null)
-                    {
-                        RegistrarFeriado(ultimaLinha.Dia);
-                        AplicarEstadoBtn(ultimaLinha);
-                    }
-
-                    db.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-            }
         }
 
         /// <summary>
@@ -442,6 +333,10 @@ namespace Timesheet
             db.Dispose();
         }
 
+        /// <summary>
+        /// Verifica se o log de saída representa uma saída válida o usuário apenas fechou e abriu o aplicativo ou reiniciou o computador
+        /// </summary>
+        /// <returns></returns>
         private bool AnalisarLogSaida()
         {
             var texto = File.ReadAllText(Configuracao.RelatorioLogs);
@@ -525,18 +420,13 @@ namespace Timesheet
         }
 
         /// <summary>
-        /// Verifica qual foi a ultima ação salva e habilita o botão para dar seguencia aos registros
+        /// Abre o MessageBox e pega o retorno do click do usuário
         /// </summary>
-        /// <param name="ultimaLinha"></param>
-        public void AplicarEstadoBtn(Registro registro)
-        {
-            if (registro.StatusUsuario == Registro.Usuario.Working)
-            {
-                btnEntrada.IsEnabled = false;
-                btnSair.IsEnabled = true;
-            }
-        }
-
+        /// <param name="msg"></param>
+        /// <param name="titulo"></param>
+        /// <param name="path"></param>
+        /// <param name="elapsed"></param>
+        /// <param name="data"></param>
         public void AlertarSaida(string msg, string titulo, string path, bool elapsed = false, DateTime data = new DateTime())
         {
             try
@@ -574,11 +464,12 @@ namespace Timesheet
                     Registro.Sair(DateTime.Parse(dataSaida), ultimoRegistro, this);
                     Registro entrada;
 
+                    RegistrarFeriado(DateTime.Parse(dataSaida).ToString("dd/MM/yyyy"), db);
+
                     if (!elapsed)
                         entrada = Registro.Entrar(data, this);
                     else
                     {
-                        RegistrarFeriado(DateTime.Parse(dataSaida).ToString("dd/MM/yyyy"), db);
                         entrada = Registro.Entrar(DateTime.Now, this);
                     }
 
@@ -611,6 +502,12 @@ namespace Timesheet
             }
         }
 
+        /// <summary>
+        /// Retorna uma hora em um formato válido
+        /// </summary>
+        /// <param name="hora"></param>
+        /// <param name="minuto"></param>
+        /// <returns></returns>
         private string FormatarHora(double hora, int minuto)
         {
             var _hora = Convert.ToInt32(Math.Floor(hora)) < 10 ? "0" + Convert.ToInt32(Math.Floor(hora)).ToString() : Convert.ToInt32(Math.Floor(hora)).ToString();
@@ -618,7 +515,5 @@ namespace Timesheet
 
             return _hora + ":" + _minuto;
         }
-
-        #endregion
     }
 }
