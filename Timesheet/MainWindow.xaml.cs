@@ -43,10 +43,9 @@ namespace Timesheet
             InitializeComponent();
             AdministrarProcessosTimesheet();
 
-            //Instancias
+            //Instancia
             IconeNotificacao = new Forms.NotifyIcon();
 
-            //Eventos
             btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
             bar.MouseDown += (e, s) => { this.DragMove(); };
             btnConfig.Click += (e, s) => { System.Diagnostics.Process.Start(Configuracao.Diretorio); };
@@ -58,10 +57,9 @@ namespace Timesheet
             SystemEvents.SessionEnding += SystemEvents_SessionEnding;
             this.StateChanged += MainWindow_StateChanged;
 
-            //Propriedades
             IconeNotificacao.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/Images/clock-icon.ico")).Stream);
+            IconeNotificacao.Visible = true;
 
-            //Serviços
             new AutoUpdateService();
             new AtividadeService();
             new LogSaidaService();
@@ -71,13 +69,8 @@ namespace Timesheet
             temporizador.Interval = 1000;
             temporizador.Elapsed += Cronometro;
             temporizador.Start();
-
         }
 
-        /// <summary>
-        /// Visualiza se existe outros processos do timesheet, caso exista finaliza essa e mantem a antiga, caso não exista
-        /// inicia os processos
-        /// </summary>
         private void AdministrarProcessosTimesheet()
         {
             if (Process.GetProcessesByName("Timesheet").Count() >= 2)
@@ -87,6 +80,7 @@ namespace Timesheet
             }
             else
                 IniciaProcesso(0);
+            
         }
 
         private void IniciaProcesso(int tentativa)
@@ -162,7 +156,9 @@ namespace Timesheet
                 this.Hide();
 
                 ExibirTooltipDeDados();
+
             }
+
         }
 
         private void Cronometro(object sender, System.Timers.ElapsedEventArgs e)
