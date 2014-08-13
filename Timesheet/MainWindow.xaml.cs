@@ -41,7 +41,7 @@ namespace Timesheet
         public MainWindow()
         {
             InitializeComponent();
-            AdministrarProcessosTimesheet();
+
 
             //Instancia
             IconeNotificacao = new Forms.NotifyIcon();
@@ -69,6 +69,8 @@ namespace Timesheet
             temporizador.Interval = 1000;
             temporizador.Elapsed += Cronometro;
             temporizador.Start();
+
+            AdministrarProcessosTimesheet();
         }
 
         private void AdministrarProcessosTimesheet()
@@ -80,7 +82,6 @@ namespace Timesheet
             }
             else
                 IniciaProcesso(0);
-            
         }
 
         private void IniciaProcesso(int tentativa)
@@ -95,7 +96,6 @@ namespace Timesheet
 
                 VerificarSaida();
                 ExibirValores();
-
             }
             catch (IOException e)
             {
@@ -105,7 +105,7 @@ namespace Timesheet
             catch (Exception e)
             {
                 if (tentativa > 5)
-                    MessageBox.Show(e.Message);
+                    MessageBox.Show(e.ToString(),e.Message);
                 else
                     IniciaProcesso(++tentativa);
             }
@@ -156,9 +156,7 @@ namespace Timesheet
                 this.Hide();
 
                 ExibirTooltipDeDados();
-
             }
-
         }
 
         private void Cronometro(object sender, System.Timers.ElapsedEventArgs e)
