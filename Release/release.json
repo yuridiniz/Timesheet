@@ -1,4 +1,12 @@
 [{
+	"Versao" : "0.7.32",
+	"Descricao" : [
+		"Construção de serviços assincronos para update",
+		"Adição de icone",
+		"Exibição de erros internos"
+	]
+},
+[{
 	"Versao" : "0.7.31",
 	"Descricao" : [
 		"Ao registrar uma saida por tempo inativo, o sistema registrará os dias anteriores não trabalhados",
