@@ -4,5 +4,6 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <Image x:Key="clock-icone-ico" Source="Images/clock-icon.ico" />
+        <Image x:Key="clock-icone-ico2" Source="Images/clock-512.ico" />
     </Application.Resources>
 </Application>

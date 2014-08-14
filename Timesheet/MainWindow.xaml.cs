@@ -57,7 +57,7 @@ namespace Timesheet
             SystemEvents.SessionEnding += SystemEvents_SessionEnding;
             this.StateChanged += MainWindow_StateChanged;
 
-            IconeNotificacao.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/Images/clock-icon.ico")).Stream);
+            IconeNotificacao.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/Images/clock-512.ico")).Stream);
             IconeNotificacao.Visible = true;
 
             new AutoUpdateService();
