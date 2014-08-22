@@ -9,6 +9,7 @@ namespace Timesheet.Model
     public class Update
     {
         public string Versao { get; set; }
+        public bool UpdateExe { get; set; }
         public List<string> Descricao { get; set; }
     }
 }

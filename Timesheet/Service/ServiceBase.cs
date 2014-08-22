@@ -20,5 +20,15 @@ namespace Timesheet.Service
         }
 
         protected abstract void Acao(object sender, System.Timers.ElapsedEventArgs e);
+
+        protected void Pause()
+        {
+            temporizador.Stop();
+        }
+
+        protected void Resume()
+        {
+            temporizador.Start();
+        }
     }
 }

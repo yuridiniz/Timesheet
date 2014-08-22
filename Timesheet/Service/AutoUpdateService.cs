@@ -18,12 +18,13 @@ namespace Timesheet.Service
     public class AutoUpdateService : BaseService
     {
         private WebClient wc;
-        private string Json = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/release.json";
-        private string Exe = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/Timesheet.exe";
-        private string Update = "https://raw.githubusercontent.com/yuridiniz/Timesheet/master/Release/Update.exe";
+        private const string DOMINIO = "https://bitbucket.org/yuridiniz/timesheet/raw/master/";
+        private string Json = DOMINIO + "Release/release.json";
+        private string Exe = DOMINIO + "Release/Timesheet.exe";
+        private string Update = DOMINIO + "Release/Update.exe";
 
         public AutoUpdateService()
-            : base(60)
+            : base(1)
         {
 
         }
@@ -42,6 +43,7 @@ namespace Timesheet.Service
             }
             else
             {
+                base.Pause();
                 wc.DownloadStringAsync(new Uri(url));
                 wc.DownloadStringCompleted += VerificarVersao;
             }
@@ -83,14 +85,21 @@ namespace Timesheet.Service
                 JavaScriptSerializer serializer = new JavaScriptSerializer();
                 List<Update> novaVersao = serializer.Deserialize<List<Update>>(jsonData);
 
-                if (novaVersao.First().Versao != Configuracao.Versao && ExibirDados(novaVersao))
+                if (novaVersao.First().Versao != Configuracao.Versao)
+                {
+                    ExibirDados(novaVersao);
                     BaixarVersao();
+                }
+                else
+                    base.Resume();
 
             }
             catch (Exception)
             {
-                
+                base.Resume();
             }
+
+
         }
         
         private void DownloadConcluido(object sender, DownloadDataCompletedEventArgs e)
@@ -98,7 +107,8 @@ namespace Timesheet.Service
             try
             {
                 File.WriteAllBytes(Configuracao.Diretorio + "TimesheetNew.exe", e.Result);
-                Process.Start(Configuracao.Diretorio + "Update.exe", Environment.CurrentDirectory + "&" + Configuracao.Diretorio);
+                var parametro = "--pathData:" + Environment.CurrentDirectory.ToString() + "|" + Configuracao.Diretorio;
+                Process.Start(Configuracao.Diretorio + "Update.exe", parametro);
                 Process.GetCurrentProcess().Kill();
             }
             catch (Exception)
@@ -108,7 +118,7 @@ namespace Timesheet.Service
             
         }
 
-        private bool ExibirDados(List<Update> versoes)
+        private void ExibirDados(List<Update> versoes)
         {
             StringBuilder str = new StringBuilder();
             str.AppendLine(string.Format("Nova verão desenvolvida: {0} \nVersão atual: {1} \n", versoes.First().Versao, Configuracao.Versao));
@@ -125,9 +135,7 @@ namespace Timesheet.Service
                     break;
             }
 
-            var resultado = MessageBox.Show(str.ToString(), "Nova versão desenvolvida", MessageBoxButton.OK, MessageBoxImage.Question);
-
-            return true;
+            MessageBox.Show(str.ToString(), "Nova versão desenvolvida", MessageBoxButton.OK, MessageBoxImage.Question);
         }
 
     }
