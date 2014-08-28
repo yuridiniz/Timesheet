@@ -1,4 +1,10 @@
 [{
+	"Versao" : "0.7.31",
+	"Descricao" : [
+		"Autoupdate verificando no decorrer do dia",
+		"Tempo inativo de sistema registra feriado"
+	]
+},{
 	"Versao" : "0.7.3",
 	"Descricao" : [
 		"Cadastro de dias não trabalhados caso a maquina se mantanha ligada por mais de 42 horas",
