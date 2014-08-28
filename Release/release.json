@@ -1,8 +1,8 @@
 [{
 	"Versao" : "0.7.31",
 	"Descricao" : [
-		"Autoupdate verificando no decorrer do dia",
-		"Tempo inativo de sistema registra feriado"
+		"Ao registrar uma saida por tempo inativo, o sistema registrará os dias anteriores não trabalhados",
+		"Autoupdate obrigatório e verificado no decorrer do dia"
 	]
 },{
 	"Versao" : "0.7.3",
