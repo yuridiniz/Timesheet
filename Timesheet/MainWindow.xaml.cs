@@ -37,6 +37,7 @@ namespace Timesheet
         System.Timers.Timer bkpRegistro;
         System.Timers.Timer timerAtividade;
         public Forms.NotifyIcon notifyIcon1;
+        CadastrarAtividade CadastroAtividade;
         bool Notificando = false;
 
         public MainWindow()
@@ -137,13 +138,16 @@ namespace Timesheet
                 {
                     var desktopWorkingArea = System.Windows.SystemParameters.WorkArea;
 
-                    var atv = new CadastrarAtividade();
-                    atv.Topmost = true;
-                    atv.WindowStartupLocation = WindowStartupLocation.Manual;
-                    atv.Left = desktopWorkingArea.Right - atv.Width;
-                    atv.Top = desktopWorkingArea.Bottom - atv.Height;
-                    atv.ShowInTaskbar = false;
-                    atv.ShowDialog();
+                    if (CadastroAtividade != null)
+                        CadastroAtividade.Close();
+
+                    CadastroAtividade = new CadastrarAtividade();
+                    CadastroAtividade.Topmost = true;
+                    CadastroAtividade.WindowStartupLocation = WindowStartupLocation.Manual;
+                    CadastroAtividade.Left = desktopWorkingArea.Right - CadastroAtividade.Width;
+                    CadastroAtividade.Top = desktopWorkingArea.Bottom - CadastroAtividade.Height;
+                    CadastroAtividade.ShowInTaskbar = false;
+                    CadastroAtividade.ShowDialog();
 
                 }));
             }

@@ -2,7 +2,8 @@
 	"Versao" : "0.7.31",
 	"Descricao" : [
 		"Ao registrar uma saida por tempo inativo, o sistema registrará os dias anteriores não trabalhados",
-		"Autoupdate obrigatório e verificado no decorrer do dia"
+		"Evita que várias janelas de cadastro de atividade se abra quando o computador estiver inativo por muitas horas",
+		"Autoupdate obrigatório e verificando no decorrer do dia"
 	]
 },{
 	"Versao" : "0.7.3",
