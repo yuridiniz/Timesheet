@@ -21,6 +21,16 @@ namespace Timesheet
 
         public static void Start()
         {
+            System.Timers.Timer temporizador = new System.Timers.Timer();
+            temporizador.Interval = 1000 * 60;
+            temporizador.Elapsed += AutoCheck;
+            temporizador.Start();
+
+
+        }
+
+        private static void AutoCheck(object sender, System.Timers.ElapsedEventArgs e)
+        {
             wc = new WebClient();
             Random random = new Random();
             string url = Json + "?random=" + random.Next().ToString();
@@ -36,7 +46,6 @@ namespace Timesheet
                 wc.DownloadStringAsync(new Uri(url));
                 wc.DownloadStringCompleted += VerificarVersao;
             }
-
         }
 
         private static void BaixarAtualizador(object sender, DownloadDataCompletedEventArgs e)

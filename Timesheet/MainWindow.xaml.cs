@@ -62,6 +62,9 @@ namespace Timesheet
             {
                 AutoUpdateService.Start();
 
+                btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
+                bar.MouseDown += (e, s) => { this.DragMove(); };
+
                 temporizador = new System.Timers.Timer();
                 bkpRegistro = new System.Timers.Timer();
                 timerAtividade = new System.Timers.Timer();
@@ -102,8 +105,6 @@ namespace Timesheet
                 this.StateChanged += MainWindow_StateChanged;
 
                 btnRegistrarAtv.Click += (e, s) => { new CadastrarAtividade().ShowDialog(); };
-                btnClose.Click += (e, s) => { this.WindowState = System.Windows.WindowState.Minimized; };
-                bar.MouseDown += (e, s) => { this.DragMove(); };
                 btnExportarTeste.Click += (e, s) => { Task.Run(() => Excel.CriarExcel()); };
             }
             catch (IOException e)
@@ -478,9 +479,9 @@ namespace Timesheet
         /// Recebe o ultimo registro e grava registros em branco até o dia de hoje
         /// </summary>
         /// <param name="ultimoDia">Ultimo dia cadastrado (linha completa)</param>
-        private void RegistrarFeriado(string ultimoDia)
+        private void RegistrarFeriado(string ultimoDia, RegistroRepositorio dbInstance = null)
         {
-            var db = new RegistroRepositorio();
+            var db = dbInstance == null ? new RegistroRepositorio() : dbInstance;
             var dia = ultimoDia.Split('/');
             if(dia.Length > 1)
             {
@@ -512,8 +513,11 @@ namespace Timesheet
                     UltimoDiaRegistrado++;
                 }
             }
-            db.SalvarAlteracao();
-            db.Dispose();
+            if (dbInstance == null)
+            {
+                db.SalvarAlteracao();
+                db.Dispose();
+            }
         }
 
         /// <summary>
@@ -569,10 +573,12 @@ namespace Timesheet
                     if (!elapsed)
                         entrada = Registro.Entrar(data, this);
                     else
+                    {
+                        RegistrarFeriado(DateTime.Parse(dataSaida).ToString("dd/MM/yyyy"), db);
                         entrada = Registro.Entrar(DateTime.Now, this);
+                    }
 
                     db.ListarRegistros().Add(entrada);
-
                     db.SalvarAlteracao();
 
                 }
